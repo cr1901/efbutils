@@ -1,1 +1,5 @@
 build/
+/deps/efb_define_def.v
+/deps/EFB_UFM.v
+/deps/ufm_wb_top.v
+/deps/USR_MEM.v

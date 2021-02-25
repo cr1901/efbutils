@@ -1,11 +1,12 @@
+import os
+
 from nmigen import *
 from nmigen_boards.tinyfpga_ax2 import *
 
 from nmigen.build import *
 from nmigen_boards.resources import *
-# from nmigen.vendor.lattice_machxo2 import *
 
-class Blinky(Elaboratable):
+class UFMEcho(Elaboratable):
     def __init__(self):
         pass
 
@@ -30,15 +31,38 @@ class Blinky(Elaboratable):
         return m
 
     def elaborate(self, plat):
-        plat.add_resources(LEDResources(pins="13", invert=False))
-        led = plat.request("led")
+        plat.add_resources([UARTResource(0, rx="16", tx="14")])
+        uart = plat.request("uart")
+
+        out_data = Signal(8, reset=65)
+        uart_wr = Signal()
+        tx_empty = Signal()
+        counter = Signal(24)
 
         m = Module()
         m.submodules += self.mk_osch_clk()
-        counter = Signal(24)
-        m.d.comb += led.eq(counter[-1])
+        m.submodules += Instance("uart", i_out_data=out_data,
+            o_tx=uart.tx, i_rx=Const(0), i_wr=uart_wr, i_rd=Const(0),
+            o_tx_empty=tx_empty, i_sys_clk=ClockSignal("osch"),
+            i_sys_rst=Const(0))
+
         m.d.osch += counter.eq(counter + 1)
+
+        with m.If(counter == 16000000):
+            m.d.comb += uart_wr.eq(1)
+            with m.If(tx_empty):
+                with m.If(out_data == 90):
+                    m.d.osch += out_data.eq(65)
+                with m.Else():
+                    m.d.osch += out_data.eq(out_data + 1)
+
         return m
 
-plan = TinyFPGAAX2Platform().build(Blinky(), do_build=False)
+
+plat = TinyFPGAAX2Platform()
+
+with open(os.path.join("..", "deps", "uart.v")) as fp:
+    plat.add_file("uart.v", fp)
+
+plan = plat.build(UFMEcho(), do_build=False)
 prod = plan.execute_local(run_script=True)
