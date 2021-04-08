@@ -34,10 +34,20 @@ class UFMEcho(Elaboratable):
         plat.add_resources([UARTResource(0, rx="16", tx="14")])
         uart = plat.request("uart")
 
-        out_data = Signal(8, reset=65)
+        out_data = Signal(8)
         uart_wr = Signal()
         tx_empty = Signal()
         counter = Signal(24)
+
+        page_loaded = Signal()
+
+        cmd = Signal(3)
+        ufm_page = Signal(11)
+        go = Signal(1)
+        busy = Signal(1)
+
+        mem_addr = Signal(4)
+        rd_data = Signal(8)
 
         m = Module()
         m.submodules += self.mk_osch_clk()
@@ -45,24 +55,34 @@ class UFMEcho(Elaboratable):
             o_tx=uart.tx, i_rx=Const(0), i_wr=uart_wr, i_rd=Const(0),
             o_tx_empty=tx_empty, i_sys_clk=ClockSignal("osch"),
             i_sys_rst=Const(0))
+        m.submodules += Instance("UFM_WB", i_clk_i=ClockSignal("osch"),
+            i_rst_n=Const(1), i_cmd=cmd, i_ufm_page=ufm_page, i_GO=go,
+            o_BUSY=busy, i_mem_clk=ClockSignal("osch"), i_mem_we=Const(0),
+            i_mem_ce=Const(1), i_mem_addr=mem_addr, o_mem_rd_data=rd_data)
 
         m.d.osch += counter.eq(counter + 1)
 
+        with m.If(counter == 8000000):
+            with m.If(~busy & ~page_loaded):
+                m.d.comb += go.eq(1)
+                m.d.osch += page_loaded.eq(1)
+
         with m.If(counter == 16000000):
-            m.d.comb += uart_wr.eq(1)
-            with m.If(tx_empty):
-                with m.If(out_data == 90):
-                    m.d.osch += out_data.eq(65)
-                with m.Else():
-                    m.d.osch += out_data.eq(out_data + 1)
+            with m.If(tx_empty & ~busy):
+                m.d.comb += uart_wr.eq(1)
+                # Data from one cycle ago.
+                m.d.osch += out_data.eq(rd_data)
+                m.d.osch += mem_addr.eq(mem_addr + 1)
 
         return m
 
 
 plat = TinyFPGAAX2Platform()
 
-with open(os.path.join("..", "deps", "uart.v")) as fp:
-    plat.add_file("uart.v", fp)
+for dep in ["uart.v", "efb_define_def.v", "EFB_UFM.v", "init.mem",
+    "ufm_wb_top.v", "USR_MEM.v"]:
+    with open(os.path.join("..", "deps", dep)) as fp:
+        plat.add_file(dep, fp)
 
 plan = plat.build(UFMEcho(), do_build=False)
 prod = plan.execute_local(run_script=True)
