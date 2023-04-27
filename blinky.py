@@ -1,8 +1,8 @@
-from nmigen import *
-from nmigen_boards.tinyfpga_ax2 import *
+from amaranth import *
+from amaranth_boards.tinyfpga_ax2 import *
 
-from nmigen.build import *
-from nmigen_boards.resources import *
+from amaranth.build import *
+from amaranth_boards.resources import *
 # from nmigen.vendor.lattice_machxo2 import *
 
 class Blinky(Elaboratable):
