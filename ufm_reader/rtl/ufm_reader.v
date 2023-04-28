@@ -137,6 +137,9 @@ module ufm_reader(clk, rst, start, stall, addr [10:0], data [7:0], data_stb, rea
 			BYPASS: begin
 				cmd = 8'hFF; ops = 24'h000000; op_len = 0; data_len = 0; wr = 1;
 			end
+			default: begin
+				cmd = 0; ops = 0; op_len = 0; data_wr = 0; data_len = 0; wr = 0;
+			end
 		endcase
 	end
 
