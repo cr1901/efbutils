@@ -3,3 +3,5 @@ build/
 /deps/EFB_UFM.v
 /deps/ufm_wb_top.v
 /deps/USR_MEM.v
+/fusesoc_libraries/
+/fusesoc.conf
