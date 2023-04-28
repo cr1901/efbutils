@@ -1,4 +1,4 @@
-module top(rx, tx, leds [7:0]);
+module  top #(parameter OSCH_FREQ="24.18") (rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
@@ -39,7 +39,7 @@ module top(rx, tx, leds [7:0]);
 		.rx_ov(dummy_rx_ov)
 	);
 
-	defparam OSCH_inst.NOM_FREQ = "24.18";	
+	defparam OSCH_inst.NOM_FREQ = OSCH_FREQ;	
 	OSCH OSCH_inst( .STDBY(1'b0 ), 		// 0=Enabled, 1=Disabled also Disabled with Bandgap=OFF
 					.OSC(clk_i),
 					.SEDSTDBY());		//  this signal is not required if not using SED - see TN1199 for more details.
@@ -75,6 +75,7 @@ module top(rx, tx, leds [7:0]);
 							.rand_valid(tx_data_valid),
 							.seq_stb(seq_stb));
 
+	defparam wait_timer.OSCH_FREQ = OSCH_FREQ;
 	wait_timer wait_timer(.clk(clk),
 						  .rst(rst),
 						  .stb(wait_stb));
@@ -99,26 +100,35 @@ module top(rx, tx, leds [7:0]);
 	end
 endmodule
 
-module wait_timer(clk, rst, stb);
+
+
+module wait_timer #(parameter OSCH_FREQ="24.18") (clk, rst, stb);
 	input wire clk;
 	input wire rst;
 	output wire stb;
 
-	reg [23:0] cnt = 24'b0;
+	reg [31:0] cnt = 32'b0;
 	
-	assign stb = (cnt == 24'd12090000);
+	assign stb = (cnt == osch_str_to_int(OSCH_FREQ) / 2);
 	
 	always @ (posedge clk) begin
 		if(rst) begin
-			cnt <= 24'b0;
+			cnt <= 32'b0;
 		end else begin
-			if(cnt == 24'd12090000) begin
-				cnt <= 24'b0;
+			if(cnt == osch_str_to_int(OSCH_FREQ) / 2) begin
+				cnt <= 32'b0;
 			end else begin
-				cnt <= cnt + 24'b1;
+				cnt <= cnt + 32'b1;
 			end
 		end
 	end
+
+	function [31:0] osch_str_to_int(input [47:0] freq);
+		case(freq)
+			"12.09": osch_str_to_int = 32'd12090000;
+			"24.18": osch_str_to_int = 32'd24180000;
+		endcase
+	endfunction
 endmodule
 
 
