@@ -1,11 +1,7 @@
-// `default_nettype none
-`include "baudrates.v"
-
 module top(rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
-	parameter BAUDRATE = `B9600;
 
 	wire clk, clk_i, rst;
 	wire [7:0] data_in;
@@ -25,26 +21,22 @@ module top(rx, tx, leds [7:0]);
 	assign leds[7:6] = ~addr[5:4];
 
 	wire [7:0] dummy_rx_data;
-	wire dummy_rx_valid;
-	uart_tranceiver #(.BAUDRATE(BAUDRATE),
-					.TX_FIFO_MODE(0),
-					.RX_FIFO_MODE(0)
-	) uart_transceiver_u0(
-		.clk(clk),
-		.resetn(~rst),
+	wire dummy_rx_valid, dummy_tx_ov, dummy_rx_ov;
 
+	uart uart(
+		.sys_clk(clk),
+		.sys_rst(rst),
+		.tx(tx),
+		.rx(rx),
+		.out_data(data_out),
+		.in_data(dummy_rx_data),
 
-		/////////////TX ports///////////////
-		.i_tx_data(data_out),
-		.i_tx_data_valid(tx_data_valid),
-		.o_tx_serial(tx),
-		.o_tx_ready(tx_ready),
-
-
-		/////////////RX ports///////////////
-		.i_rx_serial(rx),
-		.o_rx_data(dummy_rx_data),
-		.o_rx_data_valid(dummy_rx_valid)
+		.wr(tx_data_valid),
+		.rd(1'b0),
+		.tx_empty(tx_ready),
+		.rx_empty(dummy_rx_valid),
+		.tx_ov(dummy_tx_ov),
+		.rx_ov(dummy_rx_ov)
 	);
 
 	defparam OSCH_inst.NOM_FREQ = "24.18";	
