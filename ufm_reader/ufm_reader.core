@@ -15,7 +15,13 @@ filesets:
 
   mem:
     files:
-      - data/init.mem
+      - data/init.mem:
+          file_type: user
+          # Prior art: https://github.com/fusesoc/fusesoc-cores/blob/0d296c87a83a5d1d65b219ca0cb6d49d420c91e5/SD-card-controller/SD-card-controller-0-r3.core#L51
+          copyto: init.mem
+      - "tool_diamond ? (scripts/gen_JEDEC.tcl)":
+          file_type: user
+          copyto: gen_JEDEC.tcl
 
   lcmxo2-7000he-b-evn:
     files:
@@ -29,12 +35,15 @@ targets:
     toplevel: top
     parameters:
       - OSCH_FREQ=12.09
+      - INIT_MEM="init.mem"
 
   lcmxo2_7000he_b_evn:
     <<: *default
-    filesets_append: [lcmxo2-7000he-b-evn]
+    filesets_append: [mem, lcmxo2-7000he-b-evn]
     default_tool: diamond
     generate: [basic_uart]
+    hooks:
+      post_run: ["tool_diamond ? (gen_jedec)"]
     tools:
       diamond:
         part: LCMXO2-7000HE-4TG144C
@@ -60,3 +69,17 @@ parameters:
         17.73, 19.00, 20.46, 22.17, 24.18, 26.60, 29.56, 33.25, 38.00, 44.33,
         53.20, 66.50, 88.67, and 133.00)
     paramtype: vlogparam
+
+  INIT_MEM:
+    datatype: file
+    default: init.mem
+    description: |
+        User Flash Memory initialization file location. Relative paths are
+        converted to absolute; the default value of "init.mem" is an exception
+        due to FuseSoC quirks.
+    paramtype: vlogparam
+
+scripts:
+  gen_jedec:
+    cmd: [pnmainc, gen_JEDEC.tcl]
+    filesets: [mem]

@@ -1,4 +1,4 @@
-module  top #(parameter OSCH_FREQ="24.18") (rx, tx, leds [7:0]);
+module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
@@ -53,6 +53,12 @@ module  top #(parameter OSCH_FREQ="24.18") (rx, tx, leds [7:0]);
 
 	wire [10:0] flash_addr;
 	assign flash_addr = 11'd2042 + addr[5:4];
+	defparam ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_FILE_NAME = INIT_MEM;
+    defparam ufm_reader.sequencer.ufm.EFBInst_0.EFB_WB_CLK_FREQ = OSCH_FREQ;
+	// TODO: ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_START_PAGE,
+    // ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_PAGES,
+    // ufm_reader.sequencer.ufm.EFBInst_0.DEV_DENSITY
+	// These probably should NOT be user-configurable.
 	ufm_reader ufm_reader(.clk(clk),
 						  .rst(rst),
 						  .start(seq_stb),
