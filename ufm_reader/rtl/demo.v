@@ -1,7 +1,13 @@
-module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, tx, leds [7:0]);
+module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
+ 	parameter DEVICE="7000L", parameter NUM_PAGES=4)
+ 	(rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
+
+	localparam PAGE_WIDTH = $clog2(NUM_PAGES);
+	localparam ADDR_BUS_WIDTH = PAGE_WIDTH + 4;
+	localparam START_PAGE_OFFSET = ufm_end_page(DEVICE) - (NUM_PAGES - 1);
 
 	wire clk, clk_i, rst;
 	wire [7:0] data_in;
@@ -9,7 +15,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, t
 		ufm_data_valid, tx_data_valid, do_read;
 
 	wire [7:0] data_out;
-	reg [5:0] addr;
+	reg [14:0] curr_byte_addr;
 	reg take_break;
 
 	assign leds[0] = rx;
@@ -18,7 +24,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, t
 	assign leds[3] = ~ufm_data_valid;
 	assign leds[4] = ~seq_stb;
 	assign leds[5] = ~do_read;
-	assign leds[7:6] = ~addr[5:4];
+	assign leds[7:6] = ~curr_byte_addr[ADDR_BUS_WIDTH - 1:ADDR_BUS_WIDTH - 2];
 
 	wire [7:0] dummy_rx_data;
 	wire dummy_rx_valid, dummy_tx_ov, dummy_rx_ov;
@@ -51,8 +57,12 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, t
 			.rst(rst));
 
 
+	wire [ADDR_BUS_WIDTH - 1 - 4:0] curr_page_addr;
 	wire [10:0] flash_addr;
-	assign flash_addr = 11'd2042 + addr[5:4];
+
+	assign curr_page_addr = curr_byte_addr[ADDR_BUS_WIDTH - 1:4];
+	assign flash_addr = START_PAGE_OFFSET + curr_page_addr;
+
 	defparam ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_FILE_NAME = INIT_MEM;
     defparam ufm_reader.sequencer.ufm.EFBInst_0.EFB_WB_CLK_FREQ = OSCH_FREQ;
 	// TODO: ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_START_PAGE,
@@ -73,7 +83,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, t
 	page_buffer page_buffer(.clk(clk),
 							.rst(rst),
 							.data_seq(data_in),
-							.addr({9'b0, addr}),
+							.addr(curr_byte_addr),
 							.read_en(do_read),
 							.flush(1'b0),
 							.seq_valid(ufm_data_valid),
@@ -88,7 +98,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, t
 
 	always @ (posedge clk) begin
 		if(rst) begin
-			addr <= 6'b0;
+			curr_byte_addr <= 15'b0;
 			take_break <= 0;
 		end else begin
 			if(wait_stb) begin
@@ -96,16 +106,27 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem") (rx, t
 			end
 			
 			if(tx_data_valid && tx_ready) begin
-				addr <= addr + 6'b1;
+				curr_byte_addr <= curr_byte_addr + 15'b1;
 
-				if(addr == 6'd63) begin
+				if(curr_byte_addr == (NUM_PAGES*16 - 1)) begin
+					curr_byte_addr <= 15'b0;
 					take_break <= 1;
 				end
 			end
 		end
 	end
-endmodule
 
+	function integer ufm_end_page(input [39:0] device);
+		case(device)
+			"7000L": ufm_end_page = 2045;
+			"4000L", "2000U": ufm_end_page = 766;
+			"2000L", "1200U": ufm_end_page = 638;
+			"1200L", "640U": ufm_end_page = 510;
+			"640L": ufm_end_page = 190;
+			// No UFM for 256L.
+		endcase
+	endfunction
+endmodule
 
 
 module wait_timer #(parameter OSCH_FREQ="24.18") (clk, rst, stb);
