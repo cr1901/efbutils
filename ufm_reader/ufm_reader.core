@@ -34,8 +34,8 @@ targets:
       - rtl
     toplevel: top
     parameters:
-      - OSCH_FREQ=12.09
-      - INIT_MEM="init.mem"
+      - OSCH_FREQ=24.18
+      - INIT_MEM=init.mem
 
   lcmxo2_7000he_b_evn:
     <<: *default
@@ -76,7 +76,8 @@ parameters:
     description: |
         User Flash Memory initialization file location. Relative paths are
         converted to absolute; the default value of "init.mem" is an exception
-        due to FuseSoC quirks.
+        due to FuseSoC quirks. Do not wrap in quotes- this may cause Diamond
+        to emit a JEDEC file which initializes UFM to all zeroes.
     paramtype: vlogparam
 
 scripts:

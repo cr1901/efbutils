@@ -142,12 +142,12 @@ module por(clk, rst);
 	input wire clk;
 	output wire rst;
 	
-	reg [7:0] cnt = 8'b0;
+	reg [15:0] cnt = 16'b0;
 	
-	assign rst = !(cnt == 8'hFF);
+	assign rst = !(cnt == 16'hFFFF);
 	
 	always @ (posedge clk) begin
-		if(cnt != 8'hFF) begin
+		if(cnt != 16'hFFFF) begin
 			cnt <= cnt + 1'b1;
 		end
 	end	
