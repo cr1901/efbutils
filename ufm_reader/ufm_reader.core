@@ -23,7 +23,7 @@ filesets:
           file_type: user
           copyto: gen_JEDEC.tcl
 
-  lcmxo2-7000he-b-evn:
+  lcmxo2_7000he_b_evn:
     files:
       - data/lcmxo2_7000he_b_evn.lpf:
           file_type: LPF
@@ -36,10 +36,12 @@ targets:
     parameters:
       - OSCH_FREQ=24.18
       - INIT_MEM=init.mem
+      - NUM_PAGES=4
+      - DEVICE=7000L
 
   lcmxo2_7000he_b_evn:
     <<: *default
-    filesets_append: [mem, lcmxo2-7000he-b-evn]
+    filesets_append: [mem, lcmxo2_7000he_b_evn]
     default_tool: diamond
     generate: [basic_uart]
     hooks:
@@ -76,8 +78,28 @@ parameters:
     description: |
         User Flash Memory initialization file location. Relative paths are
         converted to absolute; the default value of "init.mem" is an exception
-        due to FuseSoC quirks. Do not wrap in quotes- this may cause Diamond
+        due to FuseSoC quirks.
+        
+        Do not wrap in quotes- this may cause Diamond
         to emit a JEDEC file which initializes UFM to all zeroes.
+
+        Set to "NONE" to initialize UFM to all zeroes.
+    paramtype: vlogparam
+
+  NUM_PAGES:
+    datatype: int
+    default: 4
+    description: |
+      Number of pages (16 byte chunks) INIT_MEM takes. Ignored if INIT_MEM
+      is "NONE".
+    paramtype: vlogparam
+
+  DEVICE:
+    datatype: str
+    default: 7000L
+    description: |
+      Current device. Internal parameter that works around FuseSoC quirks.
+      Should not be set by the user.
     paramtype: vlogparam
 
 scripts:

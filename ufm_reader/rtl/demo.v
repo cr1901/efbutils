@@ -1,5 +1,5 @@
 module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
- 	parameter DEVICE="7000L", parameter NUM_PAGES=4)
+ 	parameter NUM_PAGES=4, parameter DEVICE="7000L")
  	(rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
@@ -13,6 +13,15 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 	wire [7:0] data_in;
 	wire reader_ready, tx_ready, wait_stb, seq_stb,
 		ufm_data_valid, tx_data_valid, do_read;
+
+	// WB EFB connections.
+	wire wb_cyc_i;
+	wire wb_stb_i;
+	wire wb_we_i;
+	wire [7:0] wb_adr_i; 
+	wire [7:0] wb_dat_i;
+	wire [7:0] wb_dat_o;
+	wire wb_ack_o;
 
 	wire [7:0] data_out;
 	reg [14:0] curr_byte_addr;
@@ -60,15 +69,32 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 	wire [ADDR_BUS_WIDTH - 1 - 4:0] curr_page_addr;
 	wire [10:0] flash_addr;
 
-	assign curr_page_addr = curr_byte_addr[ADDR_BUS_WIDTH - 1:4];
+	generate
+		if(ADDR_BUS_WIDTH == 4) begin
+			assign curr_page_addr = 0;;
+		end else begin
+			assign curr_page_addr = curr_byte_addr[ADDR_BUS_WIDTH - 1:4];
+		end
+	endgenerate
 	assign flash_addr = START_PAGE_OFFSET + curr_page_addr;
 
-	defparam ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_FILE_NAME = INIT_MEM;
-    defparam ufm_reader.sequencer.ufm.EFBInst_0.EFB_WB_CLK_FREQ = OSCH_FREQ;
-	// TODO: ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_START_PAGE,
-    // ufm_reader.sequencer.ufm.EFBInst_0.UFM_INIT_PAGES,
-    // ufm_reader.sequencer.ufm.EFBInst_0.DEV_DENSITY
-	// These probably should NOT be user-configurable.
+	wire dummy_irq;
+	ufm #(.OSCH_FREQ(OSCH_FREQ),
+	 		 .INIT_MEM(INIT_MEM),
+    		 .NUM_PAGES(NUM_PAGES),
+			 .DEVICE(DEVICE),
+			 .START_PAGE_OFFSET(START_PAGE_OFFSET))
+		ufm (.wb_clk_i(clk),
+			 .wb_rst_i(rst),
+			 .wb_cyc_i(wb_cyc_i),
+			 .wb_stb_i(wb_stb_i),
+			 .wb_we_i(wb_we_i),
+			 .wb_adr_i(wb_adr_i), 
+             .wb_dat_i(wb_dat_o),
+			 .wb_dat_o(wb_dat_i),
+			 .wb_ack_o(wb_ack_o),
+			 .wbc_ufm_irq(dummy_irq));
+
 	ufm_reader ufm_reader(.clk(clk),
 						  .rst(rst),
 						  .start(seq_stb),
@@ -76,7 +102,15 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 						  .addr(flash_addr),
 						  .data(data_in),
 						  .data_stb(ufm_data_valid),
-						  .ready(reader_ready));
+						  .ready(reader_ready),
+						  
+						  .cyc(wb_cyc_i),
+						  .stb(wb_stb_i),
+						  .we(wb_we_i),
+						  .adr(wb_adr_i), 
+						  .data_i(wb_dat_i),
+						  .data_o(wb_dat_o),
+						  .wb_ack(wb_ack_o));
 
 
 	assign do_read = tx_ready && !take_break;

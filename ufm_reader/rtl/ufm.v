@@ -3,9 +3,16 @@
 /* C:\lscc\diamond\3.12\ispfpga\bin\nt64\scuba.exe -w -n ufm -lang verilog -synth lse -bus_exp 7 -bb -type efb -arch xo2c00 -freq 12.09 -ufm -ufm_ebr 2045 -mem_size 1 -memfile init.mem -memformat hex -wb -dev 7000  */
 /* Sun Apr 23 20:34:53 2023 */
 
+/* This verilog file is generated _without_ parameters. I have added some
+parameters for giving the user an option to change how the UFM is initialized
+from the FuseSoC command line. Original values of user-settable parameters
+are commented out. */
 
 `timescale 1 ns / 1 ps
-module ufm (wb_clk_i, wb_rst_i, wb_cyc_i, wb_stb_i, wb_we_i, wb_adr_i, 
+module ufm #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
+    parameter NUM_PAGES=4, parameter DEVICE="7000L",
+    parameter START_PAGE_OFFSET=2042)
+    (wb_clk_i, wb_rst_i, wb_cyc_i, wb_stb_i, wb_we_i, wb_adr_i, 
     wb_dat_i, wb_dat_o, wb_ack_o, wbc_ufm_irq)/* synthesis NGD_DRC_MASK=1 */;
     input wire wb_clk_i;
     input wire wb_rst_i;
@@ -25,12 +32,19 @@ module ufm (wb_clk_i, wb_rst_i, wb_cyc_i, wb_stb_i, wb_we_i, wb_adr_i,
 
     VLO scuba_vlo_inst (.Z(scuba_vlo));
 
+    localparam UFM_INIT_START_PAGE = (INIT_MEM == "NONE") ? 0 : START_PAGE_OFFSET;
+    localparam UFM_INIT_PAGES = (INIT_MEM == "NONE") ? ufm_end_page(DEVICE) + 1: NUM_PAGES;
+	localparam UFM_INIT_ALL_ZEROS = (INIT_MEM == "NONE") ? "ENABLED" : "DISABLED";
+	localparam UFM_INIT_FILE_NAME = INIT_MEM;
+    localparam EFB_WB_CLK_FREQ = OSCH_FREQ;
+    localparam DEV_DENSITY = DEVICE;
+
     defparam EFBInst_0.UFM_INIT_FILE_FORMAT = "HEX" ;
-    defparam EFBInst_0.UFM_INIT_FILE_NAME = "init.mem" ;
-    defparam EFBInst_0.UFM_INIT_ALL_ZEROS = "DISABLED" ;
-    defparam EFBInst_0.UFM_INIT_START_PAGE = 2042 ;
-    defparam EFBInst_0.UFM_INIT_PAGES = 4 ;
-    defparam EFBInst_0.DEV_DENSITY = "7000L" ;
+    // defparam EFBInst_0.UFM_INIT_FILE_NAME = "init.mem" ;
+    // defparam EFBInst_0.UFM_INIT_ALL_ZEROS = "DISABLED" ;
+    // defparam EFBInst_0.UFM_INIT_START_PAGE = 2042 ;
+    // defparam EFBInst_0.UFM_INIT_PAGES = 4 ;
+    // defparam EFBInst_0.DEV_DENSITY = "7000L" ;
     defparam EFBInst_0.EFB_UFM = "ENABLED" ;
     defparam EFBInst_0.TC_ICAPTURE = "DISABLED" ;
     defparam EFBInst_0.TC_OVERFLOW = "DISABLED" ;
@@ -74,8 +88,14 @@ module ufm (wb_clk_i, wb_rst_i, wb_cyc_i, wb_stb_i, wb_we_i, wb_adr_i,
     defparam EFBInst_0.I2C1_SLAVE_ADDR = "0b1000001" ;
     defparam EFBInst_0.I2C1_ADDRESSING = "7BIT" ;
     defparam EFBInst_0.EFB_I2C1 = "DISABLED" ;
-    defparam EFBInst_0.EFB_WB_CLK_FREQ = "12.1" ;
-    EFB EFBInst_0 (.WBCLKI(wb_clk_i), .WBRSTI(wb_rst_i), .WBCYCI(wb_cyc_i), 
+    // defparam EFBInst_0.EFB_WB_CLK_FREQ = "12.1" ;
+    EFB #(.UFM_INIT_FILE_NAME(UFM_INIT_FILE_NAME),
+         .UFM_INIT_ALL_ZEROS(UFM_INIT_ALL_ZEROS),
+         .UFM_INIT_START_PAGE(UFM_INIT_START_PAGE),
+         .UFM_INIT_PAGES(UFM_INIT_PAGES),
+         .DEV_DENSITY(DEV_DENSITY),
+         .EFB_WB_CLK_FREQ(EFB_WB_CLK_FREQ))
+    EFBInst_0 (.WBCLKI(wb_clk_i), .WBRSTI(wb_rst_i), .WBCYCI(wb_cyc_i), 
         .WBSTBI(wb_stb_i), .WBWEI(wb_we_i), .WBADRI7(wb_adr_i[7]), .WBADRI6(wb_adr_i[6]), 
         .WBADRI5(wb_adr_i[5]), .WBADRI4(wb_adr_i[4]), .WBADRI3(wb_adr_i[3]), 
         .WBADRI2(wb_adr_i[2]), .WBADRI1(wb_adr_i[1]), .WBADRI0(wb_adr_i[0]), 
@@ -110,4 +130,14 @@ module ufm (wb_clk_i, wb_rst_i, wb_cyc_i, wb_stb_i, wb_we_i, wb_adr_i,
     // exemplar begin
     // exemplar end
 
+    function integer ufm_end_page(input [39:0] device);
+		case(device)
+			"7000L": ufm_end_page = 2045;
+			"4000L", "2000U": ufm_end_page = 766;
+			"2000L", "1200U": ufm_end_page = 638;
+			"1200L", "640U": ufm_end_page = 510;
+			"640L": ufm_end_page = 190;
+			// No UFM for 256L.
+		endcase
+	endfunction
 endmodule

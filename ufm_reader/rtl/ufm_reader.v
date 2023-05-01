@@ -1,4 +1,10 @@
-module ufm_reader(clk, rst, start, stall, addr [10:0], data [7:0], data_stb, ready);
+module ufm_reader(
+	clk, rst, start, stall, addr [10:0], data [7:0], data_stb, ready,
+	
+	// Wishbone
+	cyc, stb, we, adr, 
+    data_i, data_o, wb_ack
+	);
 	input wire clk;
 	input wire rst;
 	
@@ -9,6 +15,15 @@ module ufm_reader(clk, rst, start, stall, addr [10:0], data [7:0], data_stb, rea
 	// User-visible FSM Outputs
 	output wire data_stb, ready;
 	output wire [7:0] data;
+
+	// WB inputs and outputs
+	output wire cyc;
+    output wire stb;
+    output wire we;
+    output wire [7:0] adr;
+    output wire [7:0] data_o;
+    input wire [7:0] data_i;
+    input wire wb_ack;
 	
 	// Hack to simulate enum
 	localparam [3:0] IDLE = 4'd0,
@@ -47,7 +62,15 @@ module ufm_reader(clk, rst, start, stall, addr [10:0], data [7:0], data_stb, rea
 						   .wr(wr),
 						   .data(data),
 						   .data_stb(wb_data_stb),
-						   .ack(ack));
+						   .ack(ack),
+						   
+						   .cyc(cyc),
+						   .stb(stb),
+						   .we(we),
+						   .adr(adr), 
+    					   .data_i(data_i),
+						   .data_o(data_o),
+						   .wb_ack(wb_ack));
 	
 	// State transition driver
 	reg [3:0] state;
@@ -157,14 +180,21 @@ module ufm_reader(clk, rst, start, stall, addr [10:0], data [7:0], data_stb, rea
 endmodule
 
 
-module wb_sequencer(clk, rst, req,
-	cmd [7:0], ops [23:0], op_len [1:0],
-	data_wr [31:0], data_len [5:0], wr,
-	data [7:0], data_stb, ack);
+module wb_sequencer(
+	// Attach to wb_reader.
+	clk, rst, req,
+	cmd, ops, op_len,
+	data_wr, data_len, wr,
+	data, data_stb, ack,
+	
+	// Attach to EFB.
+	cyc, stb, we, adr, 
+    data_i, data_o, wb_ack
+	);
 	input wire clk;
 	input wire rst;
 
-	// Port FSM Inputs
+	// wb_reader FSM inputs
 	input wire req;
 	input wire [7:0] cmd;
 	input wire [23:0] ops;
@@ -172,8 +202,17 @@ module wb_sequencer(clk, rst, req,
 	input wire [31:0] data_wr; // For WB operations requiring a write. Reuses data_len.
 	input wire [5:0] data_len; // TODO: Support more than page read.
 	input wire wr;
+
+	// WB FSM inputs and outputs.
+    output reg cyc;
+    output reg stb;
+    output reg we;
+    output wire [7:0] adr;
+    output wire [7:0] data_o;
+    input wire [7:0] data_i;
+    input wire wb_ack;
 	
-	// Port FSM outputs
+	// wb_reader FSM outputs
 	output reg [7:0] data;
 	output wire data_stb;
 	output wire ack;
@@ -192,26 +231,6 @@ module wb_sequencer(clk, rst, req,
 					 WB_DISABLE_1 = 5'd9,
 					 WB_DISABLE_2 = 5'd10,
 					 ERROR = 5'd11;
-	
-	// Internal FSM Outputs
-	reg cyc, stb, we;
-	wire [7:0] data_o, adr;
-	
-	// Internal FSM Inputs
-	wire [7:0] data_i;
-	wire wb_ack;
-
-	wire dummy_irq;
-	ufm ufm(.wb_clk_i(clk),
-			.wb_rst_i(rst),
-			.wb_cyc_i(cyc),
-			.wb_stb_i(stb),
-			.wb_we_i(we),
-			.wb_adr_i(adr), 
-			.wb_dat_i(data_o),
-			.wb_dat_o(data_i),
-			.wb_ack_o(wb_ack),
-			.wbc_ufm_irq(dummy_irq));
 
 	// State transition driver
 	reg [3:0] state;
