@@ -51,9 +51,11 @@ targets:
     filesets_append: [mem, lcmxo2_7000he_b_evn, cp_outputs]
     default_tool: diamond
     generate: [basic_uart]
+    flags:
+      sram: false # Do SRAM programming.
     hooks:
       post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
-      post_run: ["tool_diamond ? (ofl_evn)"]
+      post_run: ["tool_diamond ? (sram ? (ofl_evn_sram))", "tool_diamond ? (!sram ? (ofl_evn))"]
     tools:
       diamond:
         part: LCMXO2-7000HE-4TG144C
@@ -128,3 +130,6 @@ scripts:
 
   ofl_evn:
     cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.jed]
+
+  ofl_evn_sram:
+    cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.bit]
