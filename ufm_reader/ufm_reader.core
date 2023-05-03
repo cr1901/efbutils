@@ -23,6 +23,12 @@ filesets:
           file_type: user
           copyto: gen_JEDEC.tcl
 
+  cp_outputs:
+    files:
+      - "tool_diamond ? (scripts/cp_outputs.tcl)":
+          file_type: user
+          copyto: cp_outputs.tcl
+
   lcmxo2_7000he_b_evn:
     files:
       - data/lcmxo2_7000he_b_evn.lpf:
@@ -37,15 +43,16 @@ targets:
       - osch_freq=24.18
       - init_mem=init.mem
       - num_pages=4
-      - device=7000L
+      - device=7000L      
 
   lcmxo2_7000he_b_evn:
     <<: *default
-    filesets_append: [mem, lcmxo2_7000he_b_evn]
+    filesets_append: [mem, lcmxo2_7000he_b_evn, cp_outputs]
     default_tool: diamond
     generate: [basic_uart]
     hooks:
-      post_run: ["tool_diamond ? (gen_jedec)"]
+      post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
+      post_run: ["tool_diamond ? (ofl_evn)"]
     tools:
       diamond:
         part: LCMXO2-7000HE-4TG144C
@@ -61,7 +68,7 @@ parameters:
   osch_freq:
     datatype: str
     description: |
-        OSCH frequency string, twice the UART clock
+        OSCH frequency string, twice the UART clock.
         
         (Valid values are: 2.08, 2.15, 2.22, 2.29, 2.38, 2.46, 2.56, 2.66, 2.77, 2.89,
         3.02, 3.17, 3.33, 3.50, 3.69, 3.91, 4.16, 4.29, 4.43, 4.59,
@@ -106,3 +113,9 @@ scripts:
   gen_jedec:
     cmd: [pnmainc, gen_JEDEC.tcl]
     filesets: [mem]
+
+  cp_outputs:
+    cmd: [pnmainc, cp_outputs.tcl, cr1901_efbutils_ufm_reader_0_0_1]
+
+  ofl_evn:
+    cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.jed]
