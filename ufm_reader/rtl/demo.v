@@ -1,13 +1,12 @@
 module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
- 	parameter num_pages=4, parameter device="7000L")
+	parameter start_page=2042, parameter start_byte=0,
+	parameter num_pages=4, parameter end_byte=15, parameter device="7000L")
  	(rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
 
-	localparam PAGE_WIDTH = $clog2(num_pages);
-	localparam ADDR_BUS_WIDTH = PAGE_WIDTH + 4;
-	localparam START_PAGE_OFFSET = ufm_end_page(device) - (num_pages - 1);
+	localparam USED_ADDR_BUS_WIDTH = $clog2(num_pages) + 4;
 
 	wire clk, clk_i, rst;
 	wire [7:0] data_in;
@@ -33,7 +32,7 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	assign leds[3] = ~ufm_data_valid;
 	assign leds[4] = ~seq_stb;
 	assign leds[5] = ~do_read;
-	assign leds[7:6] = ~curr_byte_addr[ADDR_BUS_WIDTH - 1:ADDR_BUS_WIDTH - 2];
+	assign leds[7:6] = ~curr_byte_addr[USED_ADDR_BUS_WIDTH - 1:USED_ADDR_BUS_WIDTH - 2];
 
 	wire [7:0] dummy_rx_data;
 	wire dummy_rx_valid, dummy_tx_ov, dummy_rx_ov;
@@ -65,25 +64,15 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	por por(.clk(clk),
 			.rst(rst));
 
-
-	wire [ADDR_BUS_WIDTH - 1 - 4:0] curr_page_addr;
 	wire [10:0] flash_addr;
-
-	generate
-		if(ADDR_BUS_WIDTH == 4) begin
-			assign curr_page_addr = 0;
-		end else begin
-			assign curr_page_addr = curr_byte_addr[ADDR_BUS_WIDTH - 1:4];
-		end
-	endgenerate
-	assign flash_addr = START_PAGE_OFFSET + curr_page_addr;
+	assign flash_addr = curr_byte_addr[14:4];
 
 	wire dummy_irq;
 	ufm #(.OSCH_FREQ(osch_freq),
 	 		 .INIT_MEM(init_mem),
     		 .NUM_PAGES(num_pages),
 			 .DEVICE(device),
-			 .START_PAGE_OFFSET(START_PAGE_OFFSET))
+			 .START_PAGE(start_page))
 		ufm (.wb_clk_i(clk),
 			 .wb_rst_i(rst),
 			 .wb_cyc_i(wb_cyc_i),
@@ -132,7 +121,7 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 
 	always @ (posedge clk) begin
 		if(rst) begin
-			curr_byte_addr <= 15'b0;
+			curr_byte_addr <= {start_page[10:0], start_byte[3:0]};
 			take_break <= 0;
 		end else begin
 			if(wait_stb) begin
@@ -142,8 +131,8 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			if(tx_data_valid && tx_ready) begin
 				curr_byte_addr <= curr_byte_addr + 15'b1;
 
-				if(curr_byte_addr == (num_pages*16 - 1)) begin
-					curr_byte_addr <= 15'b0;
+				if(curr_byte_addr == ((start_page + num_pages - 1)*16 + end_byte)) begin
+					curr_byte_addr <= {start_page[10:0], start_byte[3:0]};
 					take_break <= 1;
 				end
 			end
