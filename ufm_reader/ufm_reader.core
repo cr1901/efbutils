@@ -3,18 +3,17 @@ name: cr1901:efbutils:ufm_reader:0.0.1
 description: MachXO2/3 User Flash Memory reader.
 
 filesets:
-  rtl:
-    files:
-      - rtl/demo.v
+  base: &base
+    files:  
       - rtl/ufm_reader.v
       - rtl/page_buffer.v
-      - rtl/ufm.v
     file_type: verilogSource
-    depend:
-      - cr1901:migen:uart
 
-  mem:
+  demo:
+    <<: *base
     files:
+      - rtl/demo.v
+      - rtl/ufm.v
       - data/init.mem:
           file_type: user
           # Prior art: https://github.com/fusesoc/fusesoc-cores/blob/0d296c87a83a5d1d65b219ca0cb6d49d420c91e5/SD-card-controller/SD-card-controller-0-r3.core#L51
@@ -22,12 +21,18 @@ filesets:
       - "tool_diamond ? (scripts/gen_JEDEC.tcl)":
           file_type: user
           copyto: gen_JEDEC.tcl
-
-  cp_outputs:
-    files:
       - "tool_diamond ? (scripts/cp_outputs.tcl)":
           file_type: user
           copyto: cp_outputs.tcl
+    depend:
+      - cr1901:migen:uart
+
+  page_tb:
+    files:
+      - tb/page_tb.v
+    file_type: verilogSource
+    depend:
+      - cr1901:migen:uart
 
   lcmxo2_7000he_b_evn:
     files:
@@ -36,8 +41,7 @@ filesets:
 
 targets:
   default: &default
-    filesets:
-      - rtl
+    filesets: [base, demo]
     toplevel: top
     parameters:
       - osch_freq=24.18
@@ -46,9 +50,15 @@ targets:
       - size=64
       - device=7000L      
 
+  sim_page:
+    filesets: [base, page_tb]
+    toplevel: top
+    default_tool: icarus
+    generate: [sim_uart]
+
   lcmxo2_7000he_b_evn:
     <<: *default
-    filesets_append: [mem, lcmxo2_7000he_b_evn, cp_outputs]
+    filesets_append: [lcmxo2_7000he_b_evn]
     default_tool: diamond
     generate: [basic_uart]
     flags:
@@ -61,11 +71,16 @@ targets:
         part: LCMXO2-7000HE-4TG144C
 
 generate:
-  basic_uart:
-      generator: migen_uart_gen
-      parameters:
-        baud_rate: 9600
-        loopback: false
+  basic_uart: &basic_uart
+    generator: migen_uart_gen
+    parameters:
+      baud_rate: 9600
+      loopback: false
+
+  sim_uart:
+    <<: *basic_uart
+    parameters:
+      baud_rate: 576000
 
 parameters:
   osch_freq:

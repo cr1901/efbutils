@@ -1,11 +1,8 @@
 `default_nettype none
-`include "baudrates.v"
 `timescale 1ns/1ps
 
 module top();
-    wire rx;
     wire tx;
-    parameter BAUDRATE = 4; // 3 Megabaud UART
 
     reg clk = 0;
     reg rst = 1;
@@ -15,39 +12,38 @@ module top();
     wire tx_data_valid;
     wire [7:0] data_out;
 
-    reg [7:0] dummy_rx_data;
-    reg dummy_rx_valid;
-    uart_tranceiver #(.BAUDRATE(BAUDRATE),
-                    .TX_FIFO_MODE(0),
-                    .RX_FIFO_MODE(0)
-    ) uart_transceiver_u0(
-        .clk(clk),
-        .resetn(~rst),
+    reg [7:0] rx_data;
+    reg rx_valid;
+    
+    wire [7:0] dummy_rx_data;
+    wire dummy_rx_invalid, dummy_tx_ov, dummy_rx_ov;
 
+    uart uart(
+		.sys_clk(clk),
+		.sys_rst(rst),
+		.tx(tx),
+		.rx(1'b1),
+		.out_data(data_out),
+		.in_data(dummy_rx_data),
 
-        /////////////TX ports///////////////
-        .i_tx_data(data_out),
-        .i_tx_data_valid(tx_data_valid),
-        .o_tx_serial(tx),
-        .o_tx_ready(tx_ready)
-
-
-        /////////////RX ports///////////////
-        /* .i_rx_serial(rx),
-        .o_rx_data(dummy_rx_data),
-        .o_rx_data_valid(dummy_rx_valid) */
-    );
+		.wr(tx_data_valid),
+		.rd(1'b0),
+		.tx_empty(tx_ready),
+		.rx_empty(dummy_rx_invalid),
+		.tx_ov(dummy_tx_ov),
+		.rx_ov(dummy_rx_ov)
+	);
 
     reg [5:0] addr;
     wire seq_stb;
     reg seq_stb_seen;
     page_buffer page_buffer(.clk(clk),
                             .rst(rst),
-                            .data_seq(dummy_rx_data),
+                            .data_seq(rx_data),
                             .addr({9'b0, addr}),
                             .read_en(tx_ready),
                             .flush(1'b0),
-                            .seq_valid(dummy_rx_valid),
+                            .seq_valid(rx_valid),
                             .data_rand(data_out),
                             .rand_valid(tx_data_valid),
                             .seq_stb(seq_stb));
@@ -74,10 +70,10 @@ module top();
 
         #(83.33* 2);
 
-        dummy_rx_data <= data;
-        dummy_rx_valid <= 1;
+        rx_data <= data;
+        rx_valid <= 1;
 
-        #83.33 dummy_rx_valid <= 0;
+        #83.33 rx_valid <= 0;
     end 
     endtask
 
