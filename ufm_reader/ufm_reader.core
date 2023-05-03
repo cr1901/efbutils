@@ -42,7 +42,8 @@ targets:
     parameters:
       - osch_freq=24.18
       - init_mem=init.mem
-      - num_pages=4
+      - start_offset=32672
+      - size=64
       - device=7000L      
 
   lcmxo2_7000he_b_evn:
@@ -93,12 +94,20 @@ parameters:
         Set to "NONE" to initialize UFM to all zeroes.
     paramtype: vlogparam
 
-  num_pages:
+  start_offset:
     datatype: int
-    default: 4
+    default: 32672 # 2042*16
     description: |
-      Number of pages (16 byte chunks) init_mem takes. Ignored if init_mem
+      Byte offset at which to start reading the UFM. Ignored if init_mem
       is "NONE".
+    paramtype: vlogparam
+
+  size:
+    datatype: int
+    default: 64
+    description: |
+      Number of bytes of the UFM starting from start_offset to read. Typically
+      set to the size of init_mem. Ignored if init_mem is "NONE".
     paramtype: vlogparam
 
   device:

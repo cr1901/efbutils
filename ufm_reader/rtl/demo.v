@@ -1,12 +1,17 @@
 module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
-	parameter start_page=2042, parameter start_byte=0,
-	parameter num_pages=4, parameter end_byte=15, parameter device="7000L")
+	parameter start_offset=2042*16, parameter size=64,
+	parameter device="7000L")
  	(rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
 
-	localparam USED_ADDR_BUS_WIDTH = $clog2(num_pages) + 4;
+	// {START, END}_BYTE not currently needed, kept just in case.
+	localparam START_PAGE = start_page(start_offset);
+	localparam START_BYTE = start_byte(start_offset);
+	localparam NUM_PAGES = num_pages(size);
+	localparam END_BYTE = end_byte(start_offset, size);
+	localparam USED_ADDR_BUS_WIDTH = $clog2(NUM_PAGES) + 4;
 
 	wire clk, clk_i, rst;
 	wire [7:0] data_in;
@@ -70,9 +75,9 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	wire dummy_irq;
 	ufm #(.OSCH_FREQ(osch_freq),
 	 		 .INIT_MEM(init_mem),
-    		 .NUM_PAGES(num_pages),
+    		 .NUM_PAGES(NUM_PAGES),
 			 .DEVICE(device),
-			 .START_PAGE(start_page))
+			 .START_PAGE(START_PAGE))
 		ufm (.wb_clk_i(clk),
 			 .wb_rst_i(rst),
 			 .wb_cyc_i(wb_cyc_i),
@@ -121,7 +126,7 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 
 	always @ (posedge clk) begin
 		if(rst) begin
-			curr_byte_addr <= {start_page[10:0], start_byte[3:0]};
+			curr_byte_addr <= start_offset;
 			take_break <= 0;
 		end else begin
 			if(wait_stb) begin
@@ -131,8 +136,8 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			if(tx_data_valid && tx_ready) begin
 				curr_byte_addr <= curr_byte_addr + 15'b1;
 
-				if(curr_byte_addr == ((start_page + num_pages - 1)*16 + end_byte)) begin
-					curr_byte_addr <= {start_page[10:0], start_byte[3:0]};
+				if(curr_byte_addr == (start_offset + size - 1)) begin
+					curr_byte_addr <= start_offset;
 					take_break <= 1;
 				end
 			end
@@ -148,6 +153,27 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			"640L": ufm_end_page = 190;
 			// No UFM for 256L.
 		endcase
+	endfunction
+
+	function integer start_page(input [14:0] start_offset);
+		start_page = start_offset[14:4];
+	endfunction
+
+	function integer start_byte(input [14:0] start_offset);
+		start_byte = start_offset[3:0];
+	endfunction
+
+	// Extra bit to accomodate overflowing input.
+	function integer num_pages(input [15:0] size);
+		if((size % 16) == 0) begin
+			num_pages = (size / 16);
+		end else begin
+			num_pages = (size / 16) + 1;
+		end
+	endfunction
+
+	function integer end_byte(input [14:0] start_offset, input [14:0] size);
+		end_byte = (start_offset + size) % 16;
 	endfunction
 endmodule
 
