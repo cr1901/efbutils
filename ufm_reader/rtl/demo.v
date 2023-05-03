@@ -69,9 +69,6 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	por por(.clk(clk),
 			.rst(rst));
 
-	wire [10:0] flash_addr;
-	assign flash_addr = curr_byte_addr[14:4];
-
 	wire dummy_irq;
 	ufm #(.OSCH_FREQ(osch_freq),
 	 		 .INIT_MEM(init_mem),
@@ -89,14 +86,14 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			 .wb_ack_o(wb_ack_o),
 			 .wbc_ufm_irq(dummy_irq));
 
+	assign do_read = tx_ready && !take_break;
 	ufm_reader ufm_reader(.clk(clk),
 						  .rst(rst),
-						  .start(seq_stb),
 						  .stall(1'b0),
-						  .addr(flash_addr),
-						  .data(data_in),
-						  .data_stb(ufm_data_valid),
-						  .ready(reader_ready),
+						  .byte_addr(curr_byte_addr),
+						  .read_en(do_read),
+						  .data_out(data_out),
+						  .valid(tx_data_valid),
 						  
 						  .cyc(wb_cyc_i),
 						  .stb(wb_stb_i),
@@ -105,19 +102,6 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 						  .data_i(wb_dat_i),
 						  .data_o(wb_dat_o),
 						  .wb_ack(wb_ack_o));
-
-
-	assign do_read = tx_ready && !take_break;
-	page_buffer page_buffer(.clk(clk),
-							.rst(rst),
-							.data_seq(data_in),
-							.addr(curr_byte_addr),
-							.read_en(do_read),
-							.flush(1'b0),
-							.seq_valid(ufm_data_valid),
-							.data_rand(data_out),
-							.rand_valid(tx_data_valid),
-							.seq_stb(seq_stb));
 
 	defparam wait_timer.OSCH_FREQ = osch_freq;
 	wait_timer wait_timer(.clk(clk),

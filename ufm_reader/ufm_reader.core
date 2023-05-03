@@ -6,6 +6,7 @@ filesets:
   base: &base
     files:  
       - rtl/ufm_reader.v
+      - rtl/ufm_streamer.v
       - rtl/page_buffer.v
     file_type: verilogSource
 
@@ -138,7 +139,7 @@ parameters:
 scripts:
   gen_jedec:
     cmd: [pnmainc, gen_JEDEC.tcl]
-    filesets: [mem]
+    filesets: [demo]
 
   cp_outputs:
     cmd: [pnmainc, cp_outputs.tcl, cr1901_efbutils_ufm_reader_0_0_1]
