@@ -1,13 +1,13 @@
-module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
- 	parameter NUM_PAGES=4, parameter DEVICE="7000L")
+module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
+ 	parameter num_pages=4, parameter device="7000L")
  	(rx, tx, leds [7:0]);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
 
-	localparam PAGE_WIDTH = $clog2(NUM_PAGES);
+	localparam PAGE_WIDTH = $clog2(num_pages);
 	localparam ADDR_BUS_WIDTH = PAGE_WIDTH + 4;
-	localparam START_PAGE_OFFSET = ufm_end_page(DEVICE) - (NUM_PAGES - 1);
+	localparam START_PAGE_OFFSET = ufm_end_page(device) - (num_pages - 1);
 
 	wire clk, clk_i, rst;
 	wire [7:0] data_in;
@@ -54,7 +54,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 		.rx_ov(dummy_rx_ov)
 	);
 
-	defparam OSCH_inst.NOM_FREQ = OSCH_FREQ;	
+	defparam OSCH_inst.NOM_FREQ = osch_freq;	
 	OSCH OSCH_inst( .STDBY(1'b0 ), 		// 0=Enabled, 1=Disabled also Disabled with Bandgap=OFF
 					.OSC(clk_i),
 					.SEDSTDBY());		//  this signal is not required if not using SED - see TN1199 for more details.
@@ -71,7 +71,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 
 	generate
 		if(ADDR_BUS_WIDTH == 4) begin
-			assign curr_page_addr = 0;;
+			assign curr_page_addr = 0;
 		end else begin
 			assign curr_page_addr = curr_byte_addr[ADDR_BUS_WIDTH - 1:4];
 		end
@@ -79,10 +79,10 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 	assign flash_addr = START_PAGE_OFFSET + curr_page_addr;
 
 	wire dummy_irq;
-	ufm #(.OSCH_FREQ(OSCH_FREQ),
-	 		 .INIT_MEM(INIT_MEM),
-    		 .NUM_PAGES(NUM_PAGES),
-			 .DEVICE(DEVICE),
+	ufm #(.OSCH_FREQ(osch_freq),
+	 		 .INIT_MEM(init_mem),
+    		 .NUM_PAGES(num_pages),
+			 .DEVICE(device),
 			 .START_PAGE_OFFSET(START_PAGE_OFFSET))
 		ufm (.wb_clk_i(clk),
 			 .wb_rst_i(rst),
@@ -125,7 +125,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 							.rand_valid(tx_data_valid),
 							.seq_stb(seq_stb));
 
-	defparam wait_timer.OSCH_FREQ = OSCH_FREQ;
+	defparam wait_timer.OSCH_FREQ = osch_freq;
 	wait_timer wait_timer(.clk(clk),
 						  .rst(rst),
 						  .stb(wait_stb));
@@ -142,7 +142,7 @@ module  top #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 			if(tx_data_valid && tx_ready) begin
 				curr_byte_addr <= curr_byte_addr + 15'b1;
 
-				if(curr_byte_addr == (NUM_PAGES*16 - 1)) begin
+				if(curr_byte_addr == (num_pages*16 - 1)) begin
 					curr_byte_addr <= 15'b0;
 					take_break <= 1;
 				end

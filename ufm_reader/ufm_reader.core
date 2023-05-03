@@ -34,10 +34,10 @@ targets:
       - rtl
     toplevel: top
     parameters:
-      - OSCH_FREQ=24.18
-      - INIT_MEM=init.mem
-      - NUM_PAGES=4
-      - DEVICE=7000L
+      - osch_freq=24.18
+      - init_mem=init.mem
+      - num_pages=4
+      - device=7000L
 
   lcmxo2_7000he_b_evn:
     <<: *default
@@ -58,7 +58,7 @@ generate:
         loopback: false
 
 parameters:
-  OSCH_FREQ:
+  osch_freq:
     datatype: str
     description: |
         OSCH frequency string, twice the UART clock
@@ -72,7 +72,7 @@ parameters:
         53.20, 66.50, 88.67, and 133.00)
     paramtype: vlogparam
 
-  INIT_MEM:
+  init_mem:
     datatype: file
     default: init.mem
     description: |
@@ -86,15 +86,15 @@ parameters:
         Set to "NONE" to initialize UFM to all zeroes.
     paramtype: vlogparam
 
-  NUM_PAGES:
+  num_pages:
     datatype: int
     default: 4
     description: |
-      Number of pages (16 byte chunks) INIT_MEM takes. Ignored if INIT_MEM
+      Number of pages (16 byte chunks) init_mem takes. Ignored if init_mem
       is "NONE".
     paramtype: vlogparam
 
-  DEVICE:
+  device:
     datatype: str
     default: 7000L
     description: |
