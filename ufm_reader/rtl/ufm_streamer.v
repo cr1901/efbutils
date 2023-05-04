@@ -2,8 +2,8 @@ module ufm_streamer(
 	clk, rst, start, stall, addr, data, data_stb, ready,
 	
 	// Wishbone
-	cyc, stb, we, adr, 
-    data_i, data_o, wb_ack
+	efb_cyc_o, efb_stb_o, efb_we_o, efb_adr_o, 
+    efb_dat_i, efb_dat_o, efb_ack_i
 	);
 	input wire clk;
 	input wire rst;
@@ -17,13 +17,13 @@ module ufm_streamer(
 	output wire [7:0] data;
 
 	// WB inputs and outputs
-	output wire cyc;
-    output wire stb;
-    output wire we;
-    output wire [7:0] adr;
-    output wire [7:0] data_o;
-    input wire [7:0] data_i;
-    input wire wb_ack;
+	output wire efb_cyc_o;
+    output wire efb_stb_o;
+    output wire efb_we_o;
+    output wire [7:0] efb_adr_o;
+    output wire [7:0] efb_dat_o;
+    input wire [7:0] efb_dat_i;
+    input wire efb_ack_i;
 	
 	// Hack to simulate enum
 	localparam [3:0] IDLE = 4'd0,
@@ -64,13 +64,13 @@ module ufm_streamer(
 						   .data_stb(wb_data_stb),
 						   .ack(ack),
 						   
-						   .cyc(cyc),
-						   .stb(stb),
-						   .we(we),
-						   .adr(adr), 
-    					   .data_i(data_i),
-						   .data_o(data_o),
-						   .wb_ack(wb_ack));
+						   .efb_cyc_o(efb_cyc_o),
+						   .efb_stb_o(efb_stb_o),
+						   .efb_we_o(efb_we_o),
+						   .efb_adr_o(efb_adr_o), 
+    					   .efb_dat_i(efb_dat_i),
+						   .efb_dat_o(efb_dat_o),
+						   .efb_ack_i(efb_ack_i));
 	
 	// State transition driver
 	reg [3:0] state;
@@ -188,8 +188,8 @@ module wb_sequencer(
 	data, data_stb, ack,
 	
 	// Attach to EFB.
-	cyc, stb, we, adr, 
-    data_i, data_o, wb_ack
+	efb_cyc_o, efb_stb_o, efb_we_o, efb_adr_o, 
+    efb_dat_i, efb_dat_o, efb_ack_i
 	);
 	input wire clk;
 	input wire rst;
@@ -204,13 +204,13 @@ module wb_sequencer(
 	input wire wr;
 
 	// WB FSM inputs and outputs.
-    output reg cyc;
-    output reg stb;
-    output reg we;
-    output wire [7:0] adr;
-    output wire [7:0] data_o;
-    input wire [7:0] data_i;
-    input wire wb_ack;
+    output reg efb_cyc_o;
+    output reg efb_stb_o;
+    output reg efb_we_o;
+    output wire [7:0] efb_adr_o;
+    output wire [7:0] efb_dat_o;
+    input wire [7:0] efb_dat_i;
+    input wire efb_ack_i;
 	
 	// wb_reader FSM outputs
 	output reg [7:0] data;
@@ -257,8 +257,8 @@ module wb_sequencer(
 			end
 			
 			if(state == WB_DATA_1) begin
-				if(wb_ack) begin
-					data <= data_i;
+				if(efb_ack_i) begin
+					data <= efb_dat_i;
 				end
 			end
 			
@@ -289,7 +289,7 @@ module wb_sequencer(
 	
 			WB_ENABLE_1: begin
 				wb_write;
-				next_state_if_asserted(wb_ack, WB_ENABLE_2);
+				next_state_if_asserted(efb_ack_i, WB_ENABLE_2);
 			end
 			
 			WB_ENABLE_2: begin
@@ -298,7 +298,7 @@ module wb_sequencer(
 			
 			WB_CMD_1: begin
 				wb_write;
-				next_state_if_asserted(wb_ack, WB_CMD_2);
+				next_state_if_asserted(efb_ack_i, WB_CMD_2);
 			end
 			
 			WB_CMD_2: begin
@@ -313,7 +313,7 @@ module wb_sequencer(
 			
 			WB_OPERAND_1: begin
 				wb_write;
-				next_state_if_asserted(wb_ack, WB_OPERAND_2);
+				next_state_if_asserted(efb_ack_i, WB_OPERAND_2);
 			end
 			
 			WB_OPERAND_2: begin
@@ -334,7 +334,7 @@ module wb_sequencer(
 					wb_read;
 				end
 				
-				next_state_if_asserted(wb_ack, WB_DATA_2);
+				next_state_if_asserted(efb_ack_i, WB_DATA_2);
 			end
 			
 			WB_DATA_2: begin
@@ -347,7 +347,7 @@ module wb_sequencer(
 			
 			WB_DISABLE_1: begin
 				wb_write;
-				next_state_if_asserted(wb_ack, WB_DISABLE_2);
+				next_state_if_asserted(efb_ack_i, WB_DISABLE_2);
 			end
 			
 			WB_DISABLE_2: begin
@@ -381,33 +381,33 @@ module wb_sequencer(
 	*/
 	task default_wb;
 		begin
-			cyc = 0;
-			stb = 0;
-			we = 0;
+			efb_cyc_o = 0;
+			efb_stb_o = 0;
+			efb_we_o = 0;
 		end
 	endtask
 	
 	task wb_write;
 		begin
-			cyc = 1'b1;
-			stb = 1'b1;
-			we = 1'b1;
+			efb_cyc_o = 1'b1;
+			efb_stb_o = 1'b1;
+			efb_we_o = 1'b1;
 		end
 	endtask
 	
 	task wb_read;
 		begin
-			cyc = 1'b1;
-			stb = 1'b1;
-			we = 1'b0;
+			efb_cyc_o = 1'b1;
+			efb_stb_o = 1'b1;
+			efb_we_o = 1'b0;
 		end
 	endtask
 	
 	/* assign data_valid = (state == WB_1); */
 	assign data_stb = (state == WB_DATA_2);
 	assign ack = (state == WB_DISABLE_2);
-	assign data_o = data_payload(state, cmd, ops, curr_op, wr, data_wr, curr_data);
-	assign adr = addr_payload(state, wr);
+	assign efb_dat_o = data_payload(state, cmd, ops, curr_op, wr, data_wr, curr_data);
+	assign efb_adr_o = addr_payload(state, wr);
 	
 	function [7:0] data_payload(input [3:0] state, input [7:0] cmd,
 		input [23:0] ops, input [1:0] curr_op,

@@ -2,8 +2,8 @@ module ufm_reader(
     clk, rst, stall, byte_addr, read_en, data_out, valid,
 	
 	// To EFB
-	cyc, stb, we, adr,
-    data_i, data_o, wb_ack
+	efb_cyc_o, efb_stb_o, efb_we_o, efb_adr_o,
+    efb_dat_i, efb_dat_o, efb_ack_i
 );
     input wire clk, rst, stall, read_en;
     output wire [7:0] data_out;
@@ -11,13 +11,13 @@ module ufm_reader(
     output wire valid;
 
 	// WB EFB connections.
-	output wire cyc;
-	output wire stb;
-	output wire we;
-	output wire [7:0] adr; 
-	input wire [7:0] data_i;
-	output wire [7:0] data_o;
-	input wire wb_ack;
+	output wire efb_cyc_o;
+	output wire efb_stb_o;
+	output wire efb_we_o;
+	output wire [7:0] efb_adr_o; 
+	input wire [7:0] efb_dat_i;
+	output wire [7:0] efb_dat_o;
+	input wire efb_ack_i;
 
     wire [7:0] streamer_data;
 	wire streamer_stb, streamer_data_valid;
@@ -37,13 +37,13 @@ module ufm_reader(
 						  .data_stb(streamer_data_valid),
 						  .ready(reader_ready),
 						  
-						  .cyc(cyc),
-						  .stb(stb),
-						  .we(we),
-						  .adr(adr), 
-						  .data_i(data_i),
-						  .data_o(data_o),
-						  .wb_ack(wb_ack));
+						  .efb_cyc_o(efb_cyc_o),
+						  .efb_stb_o(efb_stb_o),
+						  .efb_we_o(efb_we_o),
+						  .efb_adr_o(efb_adr_o), 
+						  .efb_dat_i(efb_dat_i),
+						  .efb_dat_o(efb_dat_o),
+						  .efb_ack_i(efb_ack_i));
 
 	page_buffer page_buffer(.clk(clk),
 							.rst(rst),

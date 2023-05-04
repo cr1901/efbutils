@@ -19,13 +19,13 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 		ufm_data_valid, tx_data_valid, do_read;
 
 	// WB EFB connections.
-	wire wb_cyc_i;
-	wire wb_stb_i;
-	wire wb_we_i;
-	wire [7:0] wb_adr_i; 
+	wire wb_cyc_o;
+	wire wb_stb_o;
+	wire wb_we_o;
+	wire [7:0] wb_adr_o; 
 	wire [7:0] wb_dat_i;
 	wire [7:0] wb_dat_o;
-	wire wb_ack_o;
+	wire wb_ack_i;
 
 	wire [7:0] data_out;
 	reg [14:0] curr_byte_addr;
@@ -77,13 +77,13 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			 .START_PAGE(START_PAGE))
 		ufm (.wb_clk_i(clk),
 			 .wb_rst_i(rst),
-			 .wb_cyc_i(wb_cyc_i),
-			 .wb_stb_i(wb_stb_i),
-			 .wb_we_i(wb_we_i),
-			 .wb_adr_i(wb_adr_i), 
+			 .wb_cyc_i(wb_cyc_o),
+			 .wb_stb_i(wb_stb_o),
+			 .wb_we_i(wb_we_o),
+			 .wb_adr_i(wb_adr_o), 
              .wb_dat_i(wb_dat_o),
 			 .wb_dat_o(wb_dat_i),
-			 .wb_ack_o(wb_ack_o),
+			 .wb_ack_o(wb_ack_i),
 			 .wbc_ufm_irq(dummy_irq));
 
 	assign do_read = tx_ready && !take_break;
@@ -95,13 +95,13 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 						  .data_out(data_out),
 						  .valid(tx_data_valid),
 						  
-						  .cyc(wb_cyc_i),
-						  .stb(wb_stb_i),
-						  .we(wb_we_i),
-						  .adr(wb_adr_i), 
-						  .data_i(wb_dat_i),
-						  .data_o(wb_dat_o),
-						  .wb_ack(wb_ack_o));
+						  .efb_cyc_o(wb_cyc_o),
+						  .efb_stb_o(wb_stb_o),
+						  .efb_we_o(wb_we_o),
+						  .efb_adr_o(wb_adr_o), 
+						  .efb_dat_i(wb_dat_i),
+						  .efb_dat_o(wb_dat_o),
+						  .efb_ack_i(wb_ack_i));
 
 	defparam wait_timer.OSCH_FREQ = osch_freq;
 	wait_timer wait_timer(.clk(clk),
