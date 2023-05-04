@@ -110,7 +110,7 @@ module ufm_streamer(
 		end
 	endtask
 	
-	always @(state or start or frame_done) begin
+	always @(state or start or frame_done or data_rd_stb or ufm_busy) begin
 		next = state;
 		case(state)
 			IDLE: next_state_if_asserted(start, ENABLE_CONFIG);
@@ -158,13 +158,13 @@ module ufm_streamer(
 				data_wr = {18'b0100_0000_0000_0000_00, 3'b000, page_addr}; data_len = 5'd4; xfer_is_wr = 1;
 			end
 			READ_UFM: begin
-				cmd = 8'hCA; ops = 24'h100001; op_len = 2'd3; data_len = 5'd16; xfer_is_wr = 0;
+				cmd = 8'hCA; ops = 24'h100001; op_len = 2'd3; data_wr = 0; data_len = 5'd16; xfer_is_wr = 0;
 			end
 			DISABLE_CONFIG: begin
-				cmd = 8'h26; ops = 24'h000000; op_len = 2'd2; data_len = 0; xfer_is_wr = 1;
+				cmd = 8'h26; ops = 24'h000000; op_len = 2'd2; data_wr = 0; data_len = 0; xfer_is_wr = 1;
 			end
 			BYPASS: begin
-				cmd = 8'hFF; ops = 24'h000000; op_len = 0; data_len = 0; xfer_is_wr = 1;
+				cmd = 8'hFF; ops = 24'h000000; op_len = 0; data_wr = 0; data_len = 0; xfer_is_wr = 1;
 			end
 			default: begin
 				cmd = 0; ops = 0; op_len = 0; data_wr = 0; data_len = 0; xfer_is_wr = 0;
@@ -285,7 +285,8 @@ module efb_sequencer(
 		end
 	endtask
 
-	always @(state or xfer_req or frame_done or curr_op or curr_data or xfer_is_wr) begin
+	always @(state or xfer_req or frame_done or curr_op or curr_data or xfer_is_wr
+	 	or op_len or data_len or efb_ack_i) begin
 		next = state;
 		default_wb;
 		case(state)

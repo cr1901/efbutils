@@ -1,7 +1,7 @@
 module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	parameter start_offset=2042*16, parameter size=64,
 	parameter device="7000L")
- 	(rx, tx, leds [7:0]);
+ 	(rx, tx, leds);
 	input wire rx;
 	output wire tx;
 	output wire [7:0] leds;
