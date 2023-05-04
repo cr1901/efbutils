@@ -1,14 +1,14 @@
 module ufm_reader(
-    clk, rst, stall, byte_addr, read_en, data_out, valid,
+    clk, rst, stall, ufm_addr, read_en, ufm_data, ufm_valid,
 	
 	// To EFB
 	efb_cyc_o, efb_stb_o, efb_we_o, efb_adr_o,
     efb_dat_i, efb_dat_o, efb_ack_i
 );
     input wire clk, rst, stall, read_en;
-    output wire [7:0] data_out;
-    input wire [14:0] byte_addr;
-    output wire valid;
+    output wire [7:0] ufm_data;
+    input wire [14:0] ufm_addr;
+    output wire ufm_valid;
 
 	// WB EFB connections.
 	output wire efb_cyc_o;
@@ -26,15 +26,15 @@ module ufm_reader(
                           read_en is not asserted. */
 
     wire [10:0] flash_addr;
-	assign flash_addr = byte_addr[14:4];
+	assign flash_addr = ufm_addr[14:4];
 
 	ufm_streamer ufm_streamer(.clk(clk),
 						  .rst(rst),
 						  .start(streamer_stb),
 						  .stall(1'b0),
-						  .addr(flash_addr),
-						  .data(streamer_data),
-						  .data_stb(streamer_data_valid),
+						  .page_addr(flash_addr),
+						  .ufm_data_rd(streamer_data),
+						  .ufm_rd_stb(streamer_data_valid),
 						  .ready(reader_ready),
 						  
 						  .efb_cyc_o(efb_cyc_o),
@@ -48,11 +48,11 @@ module ufm_reader(
 	page_buffer page_buffer(.clk(clk),
 							.rst(rst),
 							.data_seq(streamer_data),
-							.addr(byte_addr),
+							.addr(ufm_addr),
 							.read_en(read_en),
 							.flush(1'b0),
 							.seq_valid(streamer_data_valid),
-							.data_rand(data_out),
-							.rand_valid(valid),
+							.data_rand(ufm_data),
+							.rand_valid(ufm_valid),
 							.seq_stb(streamer_stb));
 endmodule
