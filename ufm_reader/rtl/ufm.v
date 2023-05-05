@@ -10,7 +10,7 @@ are commented out. */
 
 `timescale 1 ns / 1 ps
 module ufm #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
-    parameter NUM_PAGES=4, parameter DEVICE="7000L",
+    parameter ZERO_MEM=0, parameter NUM_PAGES=4, parameter DEVICE="7000L",
     parameter START_PAGE=2042)
     (wb_clk_i, wb_rst_i, wb_cyc_i, wb_stb_i, wb_we_i, wb_adr_i, 
     wb_dat_i, wb_dat_o, wb_ack_o, wbc_ufm_irq)/* synthesis NGD_DRC_MASK=1 */;
@@ -32,9 +32,9 @@ module ufm #(parameter OSCH_FREQ="24.18", parameter INIT_MEM="init.mem",
 
     VLO scuba_vlo_inst (.Z(scuba_vlo));
 
-    localparam UFM_INIT_START_PAGE = (INIT_MEM == "NONE") ? 0 : START_PAGE;
-    localparam UFM_INIT_PAGES = (INIT_MEM == "NONE") ? ufm_end_page(DEVICE) + 1: NUM_PAGES;
-	localparam UFM_INIT_ALL_ZEROS = (INIT_MEM == "NONE") ? "ENABLED" : "DISABLED";
+    localparam UFM_INIT_START_PAGE = ZERO_MEM ? 0 : START_PAGE;
+    localparam UFM_INIT_PAGES = ZERO_MEM ? ufm_end_page(DEVICE) + 1: NUM_PAGES;
+	localparam UFM_INIT_ALL_ZEROS = ZERO_MEM ? "ENABLED" : "DISABLED";
 	localparam UFM_INIT_FILE_NAME = INIT_MEM;
     localparam EFB_WB_CLK_FREQ = OSCH_FREQ;
     localparam DEV_DENSITY = DEVICE;

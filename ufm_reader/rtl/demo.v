@@ -1,5 +1,5 @@
 module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
-	parameter start_offset=2042*16, parameter size=64,
+	parameter zero_mem=0, parameter start_offset=2042*16, parameter size=64,
 	parameter device="7000L")
  	(rx, tx, leds);
 	input wire rx;
@@ -62,7 +62,8 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	OSCH OSCH_inst( .STDBY(1'b0 ), 		// 0=Enabled, 1=Disabled also Disabled with Bandgap=OFF
 					.OSC(clk_i),
 					.SEDSTDBY());		//  this signal is not required if not using SED - see TN1199 for more details.
-									
+
+	// TODO: Does not exist on 640 parts.
 	CLKDIVC CLKDIVC_inst(.CLKI(clk_i),
 						.CDIVX(clk));
 						
@@ -72,6 +73,7 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	wire dummy_irq;
 	ufm #(.OSCH_FREQ(osch_freq),
 	 		 .INIT_MEM(init_mem),
+			 .ZERO_MEM(zero_mem),
     		 .NUM_PAGES(NUM_PAGES),
 			 .DEVICE(device),
 			 .START_PAGE(START_PAGE))

@@ -52,6 +52,7 @@ targets:
     parameters:
       - osch_freq=24.18
       - init_mem=init.mem
+      - zero_mem=false
       - start_offset=32672 # 2042*16
       - size=64
       - device=7000L      
@@ -120,7 +121,7 @@ parameters:
     paramtype: vlogparam
 
   init_mem:
-    datatype: str
+    datatype: file
     default: init.mem
     description: |
         User Flash Memory initialization file location. Relative paths are
@@ -129,16 +130,22 @@ parameters:
         
         Do not wrap in quotes- this may cause Diamond
         to emit a JEDEC file which initializes UFM to all zeroes.
+    paramtype: vlogparam
 
-        Set to "NONE" to initialize UFM to all zeroes.
+  zero_mem:
+    datatype: bool
+    default: false
+    description: |
+        Initialize UFM to all zeros. init_mem, start_offset, and size are
+        ignored if this parameter is set to "true".
     paramtype: vlogparam
 
   start_offset:
     datatype: int
     default: 32672 # 2042*16
     description: |
-      Byte offset at which to start reading the UFM. Ignored if init_mem
-      is "NONE".
+      Byte offset at which to start reading the UFM. Ignored if zero_mem
+      is "true".
     paramtype: vlogparam
 
   size:
@@ -146,7 +153,7 @@ parameters:
     default: 64
     description: |
       Number of bytes of the UFM starting from start_offset to read. Typically
-      set to the size of init_mem. Ignored if init_mem is "NONE".
+      set to the size of init_mem. Ignored if zero_mem is "true".
     paramtype: vlogparam
 
   device:
