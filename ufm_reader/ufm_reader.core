@@ -40,6 +40,11 @@ filesets:
       - data/lcmxo2_7000he_b_evn.lpf:
           file_type: LPF
 
+  tinyfpga_ax:
+    files:
+      - data/tinyfpga_ax.lpf:
+          file_type: LPF
+
 targets:
   default: &default
     filesets: [base, demo]
@@ -47,7 +52,7 @@ targets:
     parameters:
       - osch_freq=24.18
       - init_mem=init.mem
-      - start_offset=32672
+      - start_offset=32672 # 2042*16
       - size=64
       - device=7000L      
 
@@ -70,6 +75,22 @@ targets:
     tools:
       diamond:
         part: LCMXO2-7000HE-4TG144C
+
+  tinyfpga_ax:
+    <<: *default
+    parameters_append:
+      - start_offset=8112
+      - device=1200L    
+    filesets_append: [tinyfpga_ax]
+    default_tool: diamond
+    generate: [basic_uart]
+    flags:
+      sram: false # Do SRAM programming.
+    hooks:
+      post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
+    tools:
+      diamond:
+        part: LCMXO2-1200HC-4SG32C
 
 generate:
   basic_uart: &basic_uart
@@ -99,7 +120,7 @@ parameters:
     paramtype: vlogparam
 
   init_mem:
-    datatype: file
+    datatype: str
     default: init.mem
     description: |
         User Flash Memory initialization file location. Relative paths are
