@@ -1,0 +1,17 @@
+BLOCK RESETPATHS;
+BLOCK ASYNCPATHS;
+
+FREQUENCY NET "clk" 12.09 MHz;
+
+// Solder R14 and R15 respectively on the bottom of the board!
+LOCATE COMP "rx" SITE "A3";
+LOCATE COMP "tx" SITE "A2";
+
+LOCATE COMP "leds[0]" SITE "N13" ;
+LOCATE COMP "leds[1]" SITE "M12" ;
+LOCATE COMP "leds[2]" SITE "P12" ;
+LOCATE COMP "leds[3]" SITE "M11" ;
+LOCATE COMP "leds[4]" SITE "P11" ;
+LOCATE COMP "leds[5]" SITE "N10" ;
+LOCATE COMP "leds[6]" SITE "N9" ;
+LOCATE COMP "leds[7]" SITE "P9" ;

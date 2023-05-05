@@ -45,6 +45,11 @@ filesets:
       - data/tinyfpga_ax.lpf:
           file_type: LPF
 
+  step_mxo2:
+    files:
+      - data/step_mxo2.lpf:
+          file_type: LPF
+
 targets:
   default: &default
     filesets: [base, demo]
@@ -92,6 +97,22 @@ targets:
     tools:
       diamond:
         part: LCMXO2-1200HC-4SG32C
+
+  step_mxo2:
+    <<: *default
+    parameters_append:
+      - start_offset=12208
+      - device=4000L    
+    filesets_append: [step_mxo2]
+    default_tool: diamond
+    generate: [basic_uart]
+    flags:
+      sram: false # Do SRAM programming.
+    hooks:
+      post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
+    tools:
+      diamond:
+        part: LCMXO2-4000HC-4MG132C
 
 generate:
   basic_uart: &basic_uart
