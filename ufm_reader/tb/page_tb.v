@@ -19,19 +19,16 @@ module top();
     wire dummy_rx_invalid, dummy_tx_ov, dummy_rx_ov;
 
     uart uart(
-		.sys_clk(clk),
-		.sys_rst(rst),
+		.clk(clk),
+		.rst(rst),
 		.tx(tx),
 		.rx(1'b1),
-		.out_data(data_out),
-		.in_data(dummy_rx_data),
-
-		.wr(tx_data_valid),
-		.rd(1'b0),
-		.tx_empty(tx_ready),
-		.rx_empty(dummy_rx_invalid),
-		.tx_ov(dummy_tx_ov),
-		.rx_ov(dummy_rx_ov)
+		.tx_data(data_out),
+		.rx_data(dummy_rx_data),
+		.tx_rdy(tx_ready),
+		.rx_rdy(dummy_rx_invalid),
+		.tx_ack(tx_data_valid),
+		.rx_ack(1'b0)
 	);
 
     reg [5:0] addr;

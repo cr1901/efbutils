@@ -5,3 +5,4 @@ build/
 /deps/USR_MEM.v
 /fusesoc_libraries/
 /fusesoc.conf
+__pycache__/

@@ -43,19 +43,16 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 	wire dummy_rx_valid, dummy_tx_ov, dummy_rx_ov;
 
 	uart uart(
-		.sys_clk(clk),
-		.sys_rst(rst),
+		.clk(clk),
+		.rst(rst),
 		.tx(tx),
 		.rx(rx),
-		.out_data(data_out),
-		.in_data(dummy_rx_data),
-
-		.wr(tx_data_valid),
-		.rd(1'b0),
-		.tx_empty(tx_ready),
-		.rx_empty(dummy_rx_valid),
-		.tx_ov(dummy_tx_ov),
-		.rx_ov(dummy_rx_ov)
+		.tx_data(data_out),
+		.rx_data(dummy_rx_data),
+		.tx_rdy(tx_ready),
+		.rx_rdy(dummy_rx_valid),
+		.tx_ack(tx_data_valid),
+		.rx_ack(1'b0)
 	);
 
 	defparam OSCH_inst.NOM_FREQ = osch_freq;	
