@@ -25,7 +25,7 @@ class RandSignature(Signature):
 
 
 class PageBuffer(Component):
-    rand: In(RandSignature().flip())
+    rand: In(RandSignature())
     seq: Out(SeqSignature())
 
     def __init__(self):
