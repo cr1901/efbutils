@@ -7,7 +7,6 @@ filesets:
     files:  
       - rtl/ufm_reader.v
       - rtl/ufm_streamer.v
-      - rtl/page_buffer.v
     file_type: verilogSource
 
   demo:
@@ -30,8 +29,6 @@ filesets:
     files:
       - tb/page_tb.v
     file_type: verilogSource
-    depend:
-      - cr1901:migen:uart
 
   lcmxo2_7000he_b_evn:
     files:
@@ -58,19 +55,20 @@ targets:
       - zero_mem=false
       - start_offset=32672 # 2042*16
       - size=64
-      - device=7000L      
+      - device=7000L
+    generate: [page_buffer]
 
   sim_page:
     filesets: [base, page_tb]
     toplevel: top
     default_tool: icarus
-    generate: [sim_uart]
+    generate: [sim_uart, page_buffer]
 
   lcmxo2_7000he_b_evn:
     <<: *default
     filesets_append: [lcmxo2_7000he_b_evn]
     default_tool: diamond
-    generate: [basic_uart]
+    generate_append: [basic_uart]
     flags:
       sram: false # Do SRAM programming.
     hooks:
@@ -122,6 +120,9 @@ generate:
     <<: *basic_uart
     parameters:
       divisor: 21 # 576000 at 12.09 MHz
+
+  page_buffer:
+    generator: page_buffer_gen
 
 parameters:
   osch_freq:
@@ -211,3 +212,9 @@ generators:
       parameters:
         divisor (int): Divisor used to set baud rate. Controls how
         many clock cycles to wait before incrementing internal timers.
+
+  page_buffer_gen:
+    interpreter: python3
+    command: gen/page_buffer.py
+    description: |
+      Generate the page_buffer Amaranth module into Verilog.

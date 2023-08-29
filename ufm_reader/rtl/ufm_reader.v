@@ -26,7 +26,6 @@ module ufm_reader(
                           read_en is not asserted. */
 
     wire [10:0] flash_addr;
-	assign flash_addr = ufm_addr[14:4];
 
 	ufm_streamer ufm_streamer(.clk(clk),
 						  .rst(rst),
@@ -46,13 +45,14 @@ module ufm_reader(
 						  .efb_ack_i(efb_ack_i));
 
 	page_buffer page_buffer(.clk(clk),
-							.rst(rst),
-							.data_seq(streamer_data),
-							.addr(ufm_addr),
-							.read_en(read_en),
-							.flush(1'b0),
-							.seq_valid(streamer_data_valid),
-							.data_rand(ufm_data),
-							.rand_valid(ufm_valid),
-							.seq_stb(streamer_stb));
+						.rst(rst),
+						.seq__data(streamer_data),
+						.rand__addr(ufm_addr),
+						.rand__read_en(read_en),
+						.rand__flush(1'b0),
+						.seq__ack(streamer_data_valid),
+						.rand__data(ufm_data),
+						.rand__valid(ufm_valid),
+						.seq__stb(streamer_stb),
+						.seq__addr(flash_addr));
 endmodule

@@ -34,16 +34,19 @@ module top();
     reg [5:0] addr;
     wire seq_stb;
     reg seq_stb_seen;
+    wire [10:0] dummy_seq_addr;
+
     page_buffer page_buffer(.clk(clk),
                             .rst(rst),
-                            .data_seq(rx_data),
-                            .addr({9'b0, addr}),
-                            .read_en(tx_ready),
-                            .flush(1'b0),
-                            .seq_valid(rx_valid),
-                            .data_rand(data_out),
-                            .rand_valid(tx_data_valid),
-                            .seq_stb(seq_stb));
+                            .seq__data(rx_data),
+                            .rand__addr({9'b0, addr}),
+                            .rand__read_en(tx_ready),
+                            .rand__flush(1'b0),
+                            .seq__ack(rx_valid),
+                            .rand__data(data_out),
+                            .rand__valid(tx_data_valid),
+                            .seq__stb(seq_stb),
+                            .seq__addr(dummy_seq_addr));
 
     always @ (posedge clk) begin
         if(rst) begin
