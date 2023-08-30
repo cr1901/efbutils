@@ -24,6 +24,7 @@ class Wrapper(Component):
             "done": In(1),
             "op_len": Out(2),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
             "data_len": Out(6),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
+            "xfer_is_wr": Out(1) # Temporary, for compatibility with Verilog ports.  # noqa: E501
         })),
         "wr": Out(SeqWriteStreamSignature()),
         "rd": In(SeqReadStreamSignature()),
@@ -51,6 +52,7 @@ class Wrapper(Component):
             self.s.ctl.op_len.eq(self.ctl.op_len),
             self.s.ctl.data_len.eq(self.ctl.data_len),
             self.s.ctl.cmd.ops.eq(self.ctl.cmd.ops),
+            self.s.ctl.xfer_is_wr.eq(self.ctl.xfer_is_wr),
         ]
 
         return m
@@ -69,7 +71,7 @@ class SequencerGenerator(AmaranthGenerator):
         m = Wrapper(s)
 
         ios = [m.ctl.req, m.ctl.cmd.cmd, m.ctl.cmd.ops.as_value(), m.ctl.done,
-               m.ctl.op_len, m.ctl.data_len,
+               m.ctl.op_len, m.ctl.data_len, m.ctl.xfer_is_wr,
                m.wr.data.as_value(), m.wr.ready, m.wr.valid,
                m.rd.data, m.rd.stb, m.efb.cyc, m.efb.stb, m.efb.we,
                m.efb.adr, m.efb.dat_w, m.efb.dat_r, m.efb.ack]

@@ -1,7 +1,7 @@
 from enum import Enum
 
-from amaranth import Signal, Module, unsigned
-from amaranth.lib.data import ArrayLayout, Struct, Union
+from amaranth import Signal, Module, unsigned, C
+from amaranth.lib.data import ArrayLayout, Struct, Union, View
 from amaranth.lib.enum import Enum as EnumWithShape
 from amaranth.lib.wiring import Signature, In, Out, Component
 
@@ -77,6 +77,7 @@ class SequencerSignature(Signature):
             "done": In(1),
             "op_len": Out(2),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
             "data_len": Out(6),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
+            "xfer_is_wr": Out(1),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
             "wr": Out(SeqWriteStreamSignature()),
             "rd": In(SeqReadStreamSignature())
         })
@@ -122,5 +123,160 @@ class Sequencer(Component):
 
     def elaborate(self, plat):
         m = Module()
+        curr_op = Signal(2)
+        curr_data = Signal(6)
+
+        def next_state_if_asserted(stim, state):
+            with m.If(stim):
+                m.next = state
+
+        def wb_write():
+            m.d.comb += [
+                self.efb.cyc.eq(1),
+                self.efb.stb.eq(1),
+                self.efb.we.eq(1),
+            ]
+
+        def wb_read():
+            m.d.comb += [
+                self.efb.cyc.eq(1),
+                self.efb.stb.eq(1),
+            ]
+
+        def wb_data_slice_ops():
+            op_view = View(ArrayLayout(8, 3), self.ctl.cmd.ops)
+
+            with m.Switch(curr_op):
+                with m.Case(0):
+                    m.d.comb += self.efb.dat_w.eq(op_view[2])
+                with m.Case(1):
+                    m.d.comb += self.efb.dat_w.eq(op_view[1])
+                with m.Case(2):
+                    m.d.comb += self.efb.dat_w.eq(op_view[0])
+                with m.Default():
+                    pass
+
+        def wb_data_slice_data():
+            data_view = View(ArrayLayout(8, 4), self.ctl.wr.data)
+
+            with m.Switch(curr_data):
+                with m.Case(0):
+                    m.d.comb += self.efb.dat_w.eq(data_view[3])
+                with m.Case(1):
+                    m.d.comb += self.efb.dat_w.eq(data_view[2])
+                with m.Case(2):
+                    m.d.comb += self.efb.dat_w.eq(data_view[1])
+                with m.Case(3):
+                    m.d.comb += self.efb.dat_w.eq(data_view[0])
+                with m.Default():
+                    pass
+
+        with m.FSM() as fsm:
+            with m.State("IDLE"):
+                next_state_if_asserted(self.ctl.req, "WB_ENABLE_1")
+
+            with m.State("WB_ENABLE_1"):
+                wb_write()
+                m.d.comb += [
+                    self.efb.dat_w.eq(0x80),
+                    self.efb.adr.eq(0x70)
+                ]
+
+                next_state_if_asserted(self.efb.ack, "WB_ENABLE_2")
+
+            with m.State("WB_ENABLE_2"):
+                m.d.comb += self.efb.adr.eq(0x70)
+
+                m.next = "WB_CMD_1"
+
+            with m.State("WB_CMD_1"):
+                wb_write()
+                m.d.comb += [
+                    self.efb.dat_w.eq(self.ctl.cmd),
+                    self.efb.adr.eq(0x71)
+                ]
+
+                next_state_if_asserted(self.efb.ack, "WB_CMD_2")
+
+            with m.State("WB_CMD_2"):
+                m.d.comb += [
+                    self.efb.dat_w.eq(self.ctl.cmd),
+                    self.efb.adr.eq(0x71)
+                ]
+
+                with m.If(self.ctl.op_len > 0):
+                    m.next = "WB_OPERAND_1"
+                with m.Elif(self.ctl.data_len > 0):
+                    m.next = "WB_DATA_1"
+                with m.Else():
+                    m.next = "WB_DISABLE_1"
+
+            with m.State("WB_OPERAND_1"):
+                wb_write()
+                wb_data_slice_ops()
+                m.d.comb += self.efb.adr.eq(0x71)
+
+                next_state_if_asserted(self.efb.ack, "WB_OPERAND_2")
+
+            with m.State("WB_OPERAND_2"):
+                wb_data_slice_ops()
+                m.d.comb += self.efb.adr.eq(0x71)
+
+                with m.If(curr_op < self.ctl.op_len - 1):
+                    m.d.sync += curr_op.eq(curr_op + 1)
+                with m.Else():
+                    m.d.sync += curr_op.eq(0)
+
+                with m.If(curr_op < self.ctl.op_len - 1):
+                    m.next = "WB_OPERAND_1"
+                with m.Elif(self.ctl.data_len > 0):
+                    m.next = "WB_DATA_1"
+                with m.Else():
+                    m.next = "WB_DISABLE_1"
+
+            with m.State("WB_DATA_1"):
+                wb_data_slice_data()
+                with m.If(self.ctl.xfer_is_wr):
+                    wb_write()
+                    m.d.comb += self.efb.adr.eq(0x71)
+                with m.Else():
+                    wb_read()
+                    m.d.comb += self.efb.adr.eq(0x73)
+
+                with m.If(self.efb.ack):
+                    m.d.sync += self.ctl.rd.data.eq(self.efb.dat_r)
+
+                next_state_if_asserted(self.efb.ack, "WB_DATA_2")
+
+            with m.State("WB_DATA_2"):
+                wb_data_slice_data()
+                with m.If(self.ctl.xfer_is_wr):
+                    m.d.comb += self.efb.adr.eq(0x71)
+                with m.Else():
+                    m.d.comb += self.efb.adr.eq(0x73)
+                m.d.comb += self.ctl.rd.stb.eq(1)
+
+                with m.If(curr_data < self.ctl.data_len - 1):
+                    m.d.sync += curr_data.eq(curr_data + 1)
+                with m.Else():
+                    m.d.sync += curr_data.eq(0)
+
+                with m.If(curr_data < self.ctl.data_len - 1):
+                    m.next = "WB_DATA_1"
+                with m.Else():
+                    m.next = "WB_DISABLE_1"
+
+            with m.State("WB_DISABLE_1"):
+                wb_write()
+                m.d.comb += self.efb.adr.eq(0x70)
+
+                next_state_if_asserted(self.efb.ack, "WB_DISABLE_2")
+
+            with m.State("WB_DISABLE_2"):
+                m.next = "IDLE"
+                m.d.comb += self.efb.adr.eq(0x70)
+                m.d.comb += self.ctl.done.eq(1)
+
+                next_state_if_asserted(self.ctl.req, "WB_ENABLE_1")
 
         return m
