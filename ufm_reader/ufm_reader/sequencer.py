@@ -1,12 +1,12 @@
-from enum import Enum
+from enum import IntEnum
 
 from amaranth import Signal, Module, unsigned, C
 from amaranth.lib.data import ArrayLayout, Struct, Union, View
-from amaranth.lib.enum import Enum as EnumWithShape
+from amaranth.lib.enum import IntEnum as IntEnumWithShape
 from amaranth.lib.wiring import Signature, In, Out, Component
 
 
-class Name(Enum):
+class Name(IntEnum):
     IDLE = 0
     ENABLE_CONFIG = 0x74
     POLL_STATUS = 0x3C
@@ -16,14 +16,14 @@ class Name(Enum):
     BYPASS = 0xFF
 
 
-class ConstantOp(Enum):
+class ConstantOp(IntEnum):
     ZEROS = 0x0
     ONE = 0x1
     ENABLE = 0x08_00_00
     ALL_ONES = 0xFF_FF_FF
 
 
-class DisableRefreshOp(EnumWithShape, shape=unsigned(16)):
+class DisableRefreshOp(IntEnumWithShape, shape=unsigned(16)):
     ZEROS = 0x0
 
 
@@ -83,7 +83,7 @@ class SequencerSignature(Signature):
         })
 
 
-# Currently unused. It'll be used to write to UFM.
+# Currently ready/valid unused. It'll be used to write to UFM.
 class SeqWriteStreamSignature(Signature):
     def __init__(self):
         return super().__init__({

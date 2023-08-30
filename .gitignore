@@ -6,3 +6,6 @@ build/
 /fusesoc_libraries/
 /fusesoc.conf
 __pycache__/
+*.vcd
+*.gtkw
+.pytest_cache/
