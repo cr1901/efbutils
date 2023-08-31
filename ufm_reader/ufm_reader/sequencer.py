@@ -1,8 +1,6 @@
-from enum import IntEnum
-
-from amaranth import Signal, Module, unsigned, C
+from amaranth import Signal, Module, unsigned
 from amaranth.lib.data import ArrayLayout, Struct, Union, View
-from amaranth.lib.enum import IntEnum as IntEnumWithShape
+from amaranth.lib.enum import IntEnum
 from amaranth.lib.wiring import Signature, In, Out, Component
 
 
@@ -23,7 +21,7 @@ class ConstantOp(IntEnum):
     ALL_ONES = 0xFF_FF_FF
 
 
-class DisableRefreshOp(IntEnumWithShape, shape=unsigned(16)):
+class DisableRefreshOp(IntEnum, shape=unsigned(16)):
     ZEROS = 0x0
 
 
@@ -69,54 +67,43 @@ class SysConfigCmd(Struct):
     ops: Operands
 
 
-class SequencerSignature(Signature):
-    def __init__(self):
-        return super().__init__({
-            "req": Out(1),
-            "cmd": Out(SysConfigCmd),
-            "done": In(1),
-            "op_len": Out(2),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
-            "data_len": Out(6),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
-            "xfer_is_wr": Out(1),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
-            "wr": Out(SeqWriteStreamSignature()),
-            "rd": In(SeqReadStreamSignature())
-        })
-
-
 # Currently ready/valid unused. It'll be used to write to UFM.
-class SeqWriteStreamSignature(Signature):
-    def __init__(self):
-        return super().__init__({
-            "data": Out(WriteData),
-            "ready": In(1),
-            "valid": Out(1)
-        })
+SeqWriteStreamSignature = Signature({
+    "data": Out(WriteData),
+    "ready": In(1),
+    "valid": Out(1)
+})
 
+SeqReadStreamSignature = Signature({
+    "data": Out(8),
+    "stb": Out(1)
+})
 
-class SeqReadStreamSignature(Signature):
-    def __init__(self):
-        return super().__init__({
-            "data": Out(8),
-            "stb": Out(1),
-        })
+SequencerSignature = Signature({
+    "req": Out(1),
+    "cmd": Out(SysConfigCmd),
+    "done": In(1),
+    "op_len": Out(2),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
+    "data_len": Out(6),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
+    "xfer_is_wr": Out(1),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
+    "wr": Out(SeqWriteStreamSignature),
+    "rd": In(SeqReadStreamSignature)
+})
 
-
-class EfbWishbone(Signature):
-    def __init__(self):
-        return super().__init__({
-            "cyc": Out(1),
-            "stb": Out(1),
-            "we": Out(1),
-            "adr": Out(8),
-            "dat_w": Out(8),
-            "dat_r": In(8),
-            "ack": In(1)
-        })
+EfbWishbone = Signature({
+    "cyc": Out(1),
+    "stb": Out(1),
+    "we": Out(1),
+    "adr": Out(8),
+    "dat_w": Out(8),
+    "dat_r": In(8),
+    "ack": In(1)
+})
 
 
 class Sequencer(Component):
-    ctl: In(SequencerSignature())
-    efb: Out(EfbWishbone())
+    ctl: In(SequencerSignature)
+    efb: Out(EfbWishbone)
 
     def __init__(self):
         super().__init__()
@@ -171,7 +158,7 @@ class Sequencer(Component):
                 with m.Default():
                     pass
 
-        with m.FSM() as fsm:
+        with m.FSM() as fsm:  # noqa: F841
             with m.State("IDLE"):
                 next_state_if_asserted(self.ctl.req, "WB_ENABLE_1")
 

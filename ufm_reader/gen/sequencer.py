@@ -8,27 +8,25 @@ from ufm_reader.sequencer import Sequencer, Name, Operands, \
     SeqWriteStreamSignature, SeqReadStreamSignature, EfbWishbone
 
 
-class SysConfigCmdSplitter(Signature):
-    def __init__(self):
-        super().__init__({
-            "cmd": Out(Name),
-            "ops": Out(Operands),
-        })
+SysConfigCmdSplitter = Signature({
+    "cmd": Out(Name),
+    "ops": Out(Operands)
+})
 
 
 class Wrapper(Component):
     signature = Signature({
         "ctl": Out(Signature({
             "req": Out(1),
-            "cmd": Out(SysConfigCmdSplitter()),
+            "cmd": Out(SysConfigCmdSplitter),
             "done": In(1),
             "op_len": Out(2),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
             "data_len": Out(6),  # Temporary, for compatibility with Verilog ports.  # noqa: E501
             "xfer_is_wr": Out(1) # Temporary, for compatibility with Verilog ports.  # noqa: E501
         })),
-        "wr": Out(SeqWriteStreamSignature()),
-        "rd": In(SeqReadStreamSignature()),
-        "efb": Out(EfbWishbone())
+        "wr": Out(SeqWriteStreamSignature),
+        "rd": In(SeqReadStreamSignature),
+        "efb": Out(EfbWishbone)
     })
 
     def __init__(self, s):

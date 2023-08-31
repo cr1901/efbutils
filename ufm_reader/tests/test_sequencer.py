@@ -1,6 +1,4 @@
 import pytest
-from amaranth import *
-from amaranth.lib.data import View
 from amaranth.sim import Passive
 
 from ufm_reader.sequencer import Sequencer, Name, ConstantOp
@@ -85,7 +83,7 @@ def test_wrapper_write(sim_mod):
 
         while True:
             yield seq.efb.ack.eq(0)
-            if (yield seq.efb.stb) and (yield seq.efb.cyc) and not (yield seq.efb.ack):
+            if (yield seq.efb.stb) and (yield seq.efb.cyc) and not (yield seq.efb.ack):  # noqa: E501
                 yield seq.efb.ack.eq(1)
             yield
 
