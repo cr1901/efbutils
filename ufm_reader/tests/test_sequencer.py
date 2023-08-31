@@ -9,7 +9,7 @@ from gen.sequencer import Wrapper
 
 @pytest.mark.module(Wrapper(Sequencer()))
 @pytest.mark.clks((1.0 / 12e6,))
-def test_wrapper(sim_mod):
+def test_wrapper_write(sim_mod):
     sim, seq = sim_mod
 
     def in_proc():
