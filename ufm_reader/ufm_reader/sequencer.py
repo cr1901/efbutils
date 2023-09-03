@@ -60,6 +60,7 @@ class StatusRegisterByte(Struct):
 
 class ReadData(Union):
     stream: unsigned(8)
+    status: StatusRegisterByte
 
 
 class SysConfigCmd(Struct):
@@ -75,7 +76,7 @@ SeqWriteStreamSignature = Signature({
 })
 
 SeqReadStreamSignature = Signature({
-    "data": Out(8),
+    "data": Out(ReadData),
     "stb": Out(1)
 })
 

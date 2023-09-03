@@ -3,30 +3,26 @@ from amaranth.lib.data import ArrayLayout
 from amaranth.lib.wiring import Signature, In, Out, Component
 
 
-class SeqSignature(Signature):
-    def __init__(self):
-        return super().__init__({
-            "data": In(8),
-            "addr": Out(11),
-            "stb": Out(1),  # Not a RDY signal like a stream. Only sent once per byte.  # noqa: E501
-            "ack": In(1)  # Basically a VALID signal.
-        })
+SeqSignature = Signature({
+    "data": In(8),
+    "addr": Out(11),
+    "stb": Out(1),  # Not a RDY signal like a stream. Only sent once per byte.  # noqa: E501
+    "ack": In(1)  # Basically a VALID signal.
+})
 
 
-class RandSignature(Signature):
-    def __init__(self):
-        return super().__init__({
-            "data": In(8),
-            "addr": Out(15),
-            "read_en": Out(1),
-            "flush": Out(1),
-            "valid": In(1)
-        })
+RandSignature = Signature({
+    "data": In(8),
+    "addr": Out(15),
+    "read_en": Out(1),
+    "flush": Out(1),
+    "valid": In(1)
+})
 
 
 class PageBuffer(Component):
-    rand: In(RandSignature())
-    seq: Out(SeqSignature())
+    rand: In(RandSignature)
+    seq: Out(SeqSignature)
 
     def __init__(self):
         super().__init__()

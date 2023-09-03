@@ -27,22 +27,22 @@ module ufm_reader(
 
     wire [10:0] flash_addr;
 
-	ufm_streamer ufm_streamer(.clk(clk),
+	streamer ufm_streamer(.clk(clk),
 						  .rst(rst),
-						  .start(streamer_stb),
-						  .stall(1'b0),
-						  .page_addr(flash_addr),
-						  .ufm_data_rd(streamer_data),
-						  .ufm_rd_stb(streamer_data_valid),
-						  .ready(reader_ready),
+						  .stream__stb(streamer_stb),
+						  .stream__stall(1'b0),
+						  .stream__addr(flash_addr),
+						  .stream__data(streamer_data),
+						  .stream__ack(streamer_data_valid),
+						  .stream__ready(reader_ready),
 						  
-						  .efb_cyc_o(efb_cyc_o),
-						  .efb_stb_o(efb_stb_o),
-						  .efb_we_o(efb_we_o),
-						  .efb_adr_o(efb_adr_o), 
-						  .efb_dat_i(efb_dat_i),
-						  .efb_dat_o(efb_dat_o),
-						  .efb_ack_i(efb_ack_i));
+						  .efb__cyc(efb_cyc_o),
+						  .efb__stb(efb_stb_o),
+						  .efb__we(efb_we_o),
+						  .efb__adr(efb_adr_o), 
+						  .efb__dat_r(efb_dat_i),
+						  .efb__dat_w(efb_dat_o),
+						  .efb__ack(efb_ack_i));
 
 	page_buffer page_buffer(.clk(clk),
 						.rst(rst),

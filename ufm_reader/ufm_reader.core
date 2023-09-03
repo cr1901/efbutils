@@ -6,7 +6,6 @@ filesets:
   base: &base
     files:  
       - rtl/ufm_reader.v
-      - rtl/ufm_streamer.v
     file_type: verilogSource
 
   demo:
@@ -68,7 +67,7 @@ targets:
     <<: *default
     filesets_append: [lcmxo2_7000he_b_evn]
     default_tool: diamond
-    generate_append: [basic_uart, sequencer]
+    generate_append: [basic_uart, streamer]
     flags:
       sram: false # Do SRAM programming.
     hooks:
@@ -124,8 +123,8 @@ generate:
   page_buffer:
     generator: page_buffer_gen
 
-  sequencer:
-    generator: sequencer_gen
+  streamer:
+    generator: streamer_gen
 
 parameters:
   osch_freq:
@@ -222,8 +221,8 @@ generators:
     description: |
       Generate the page_buffer Amaranth module into Verilog.
 
-  sequencer_gen:
+  streamer_gen:
     interpreter: python3
-    command: gen/sequencer.py
+    command: gen/streamer.py
     description: |
-      Generate the sequencer Amaranth module into Verilog.
+      Generate the streamer Amaranth module into Verilog.
