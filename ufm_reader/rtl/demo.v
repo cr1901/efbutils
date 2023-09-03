@@ -86,21 +86,21 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			 .wbc_ufm_irq(dummy_irq));
 
 	assign do_read = tx_ready && !take_break;
-	ufm_reader ufm_reader(.clk(clk),
+	reader ufm_reader(.clk(clk),
 						  .rst(rst),
-						  .stall(1'b0),
-						  .ufm_addr(curr_byte_addr),
-						  .read_en(do_read),
-						  .ufm_data(data_out),
-						  .ufm_valid(tx_data_valid),
+						  .bus__stall(1'b0),
+						  .bus__addr(curr_byte_addr),
+						  .bus__read_en(do_read),
+						  .bus__data(data_out),
+						  .bus__valid(tx_data_valid),
 						  
-						  .efb_cyc_o(wb_cyc_o),
-						  .efb_stb_o(wb_stb_o),
-						  .efb_we_o(wb_we_o),
-						  .efb_adr_o(wb_adr_o), 
-						  .efb_dat_i(wb_dat_i),
-						  .efb_dat_o(wb_dat_o),
-						  .efb_ack_i(wb_ack_i));
+						  .efb__cyc(wb_cyc_o),
+						  .efb__stb(wb_stb_o),
+						  .efb__we(wb_we_o),
+						  .efb__adr(wb_adr_o), 
+						  .efb__dat_r(wb_dat_i),
+						  .efb__dat_w(wb_dat_o),
+						  .efb__ack(wb_ack_i));
 
 	defparam wait_timer.OSCH_FREQ = osch_freq;
 	wait_timer wait_timer(.clk(clk),

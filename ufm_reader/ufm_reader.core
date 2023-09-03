@@ -4,8 +4,6 @@ description: MachXO2/3 User Flash Memory reader.
 
 filesets:
   base: &base
-    files:  
-      - rtl/ufm_reader.v
     file_type: verilogSource
 
   demo:
@@ -55,7 +53,7 @@ targets:
       - start_offset=32672 # 2042*16
       - size=64
       - device=7000L
-    generate: [page_buffer]
+    generate: []
 
   sim_page:
     filesets: [base, page_tb]
@@ -67,7 +65,7 @@ targets:
     <<: *default
     filesets_append: [lcmxo2_7000he_b_evn]
     default_tool: diamond
-    generate_append: [basic_uart, streamer]
+    generate_append: [basic_uart, reader]
     flags:
       sram: false # Do SRAM programming.
     hooks:
@@ -123,8 +121,8 @@ generate:
   page_buffer:
     generator: page_buffer_gen
 
-  streamer:
-    generator: streamer_gen
+  reader:
+    generator: reader_gen
 
 parameters:
   osch_freq:
@@ -221,8 +219,8 @@ generators:
     description: |
       Generate the page_buffer Amaranth module into Verilog.
 
-  streamer_gen:
+  reader_gen:
     interpreter: python3
-    command: gen/streamer.py
+    command: gen/reader.py
     description: |
-      Generate the streamer Amaranth module into Verilog.
+      Generate the ufm_reader Amaranth module into Verilog.
