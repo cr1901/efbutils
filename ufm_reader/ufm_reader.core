@@ -10,7 +10,6 @@ filesets:
     <<: *base
     files:
       - rtl/demo.v
-      - rtl/ufm.v
       - data/init.mem:
           file_type: user
           # Prior art: https://github.com/fusesoc/fusesoc-cores/blob/0d296c87a83a5d1d65b219ca0cb6d49d420c91e5/SD-card-controller/SD-card-controller-0-r3.core#L51
@@ -65,7 +64,7 @@ targets:
     <<: *default
     filesets_append: [lcmxo2_7000he_b_evn]
     default_tool: diamond
-    generate_append: [basic_uart, reader]
+    generate_append: [basic_uart, reader, efb]
     flags:
       sram: false # Do SRAM programming.
     hooks:
@@ -123,6 +122,14 @@ generate:
 
   reader:
     generator: reader_gen
+
+  efb:
+    generator: efb_gen
+    parameters:
+      efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }
+      # Page granularity is temporary until I have a good opportunity to change
+      # it after things are working on the Amaranth side.
+      ufm_config: { init_mem: "init.mem", start_page: 2042, num_pages: 4, zero_mem: false}
 
 parameters:
   osch_freq:
@@ -224,3 +231,29 @@ generators:
     command: gen/reader.py
     description: |
       Generate the ufm_reader Amaranth module into Verilog.
+
+  efb_gen:
+    interpreter: python3
+    command: gen/efb.py
+    description: |
+      Generate an EFB module using an Amaranth `Instance`. YAML parameters
+      are converted to Python dictionaries to configure the IP.
+      
+      parameters:
+        efb_config: |
+          YAML dictionary to generally configure the EFB. Must not
+          be `null` if using the EFB. Consists of:
+
+            dev_density: Current device
+            efb_wb_clk_freq: Clock frequency of Wishbone bus (probably OSCH freq).
+
+        ufm_config: |
+          YAML dictionary to configure the UFM. Enables the UFM if not
+          `null`. Consists of:
+            
+            init_mem: Filename of data to load into UFM.
+            start_page: First page in UFM to use.
+            num_pages: Number of pages in UFM to use, starting at `start_page`.
+            zero_mem: Initialize UFM to all zeros. `init_mem`, `start_offset`,
+              and `num_pages` are ignored if this parameter is set to `true`.
+

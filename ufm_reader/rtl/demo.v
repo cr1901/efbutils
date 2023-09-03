@@ -68,22 +68,18 @@ module  top #(parameter osch_freq="24.18", parameter init_mem="init.mem",
 			.rst(rst));
 
 	wire dummy_irq;
-	ufm #(.OSCH_FREQ(osch_freq),
-	 		 .INIT_MEM(init_mem),
-			 .ZERO_MEM(zero_mem),
-    		 .NUM_PAGES(NUM_PAGES),
-			 .DEVICE(device),
-			 .START_PAGE(START_PAGE))
-		ufm (.wb_clk_i(clk),
-			 .wb_rst_i(rst),
-			 .wb_cyc_i(wb_cyc_o),
-			 .wb_stb_i(wb_stb_o),
-			 .wb_we_i(wb_we_o),
-			 .wb_adr_i(wb_adr_o), 
-             .wb_dat_i(wb_dat_o),
-			 .wb_dat_o(wb_dat_i),
-			 .wb_ack_o(wb_ack_i),
-			 .wbc_ufm_irq(dummy_irq));
+	EFBUtils_EFB ufm (.clk(clk),
+			 .rst(rst),
+			 .bus__cyc(wb_cyc_o),
+			 .bus__stb(wb_stb_o),
+			 .bus__we(wb_we_o),
+			 .bus__adr(wb_adr_o), 
+             .bus__dat_w(wb_dat_o),
+			 .bus__dat_r(wb_dat_i),
+			 .bus__ack(wb_ack_i),
+			 .bus__irq(dummy_irq));
+
+			 // bus__stb, bus__we, bus__adr, bus__dat_w, bus__dat_r, bus__ack, bus__irq, clk, rst, bus__cyc
 
 	assign do_read = tx_ready && !take_break;
 	reader ufm_reader(.clk(clk),
