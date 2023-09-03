@@ -9,8 +9,8 @@ class EFBGenerator(AmaranthGenerator):
 
     def __init__(self):
         super().__init__()
-        self.efb_config = self.config.get('efb_config', None)
-        self.ufm_config = self.config.get('ufm_config', None)
+        self.efb_config = self.config.get("efb_config", None)
+        self.ufm_config = self.config.get("ufm_config", None)
 
     # Generate a core to be included in another project.
     def create_module(self):

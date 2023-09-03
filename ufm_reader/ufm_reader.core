@@ -9,7 +9,6 @@ filesets:
   demo:
     <<: *base
     files:
-      - rtl/demo.v
       - data/init.mem:
           file_type: user
           # Prior art: https://github.com/fusesoc/fusesoc-cores/blob/0d296c87a83a5d1d65b219ca0cb6d49d420c91e5/SD-card-controller/SD-card-controller-0-r3.core#L51
@@ -64,7 +63,7 @@ targets:
     <<: *default
     filesets_append: [lcmxo2_7000he_b_evn]
     default_tool: diamond
-    generate_append: [basic_uart, reader, efb]
+    generate_append: [demo_lcmxo2_7000he_b_evn]
     flags:
       sram: false # Do SRAM programming.
     hooks:
@@ -117,15 +116,10 @@ generate:
     parameters:
       divisor: 21 # 576000 at 12.09 MHz
 
-  page_buffer:
-    generator: page_buffer_gen
-
-  reader:
-    generator: reader_gen
-
-  efb:
-    generator: efb_gen
+  demo_lcmxo2_7000he_b_evn:
+    generator: demo_gen
     parameters:
+      num_leds: 8
       efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }
       # Page granularity is temporary until I have a good opportunity to change
       # it after things are working on the Amaranth side.
@@ -257,3 +251,23 @@ generators:
             zero_mem: Initialize UFM to all zeros. `init_mem`, `start_offset`,
               and `num_pages` are ignored if this parameter is set to `true`.
 
+  demo_gen:
+    interpreter: python3
+    command: gen/demo.py
+    description: |
+      Generate a demo for MachXO2 boards that programs the UFM via JTAG and
+      prints the string to a serial port.
+      
+      parameters:
+        num_leds: Number of LEDs to use for showing signal values.
+        efb_config: Same as `efb_config` parameter in `efb_gen`.
+        `efb_wb_clk_freq` must be OSCH frequency, which is twice the UART clock.
+        
+        (Valid values are: 2.08, 2.15, 2.22, 2.29, 2.38, 2.46, 2.56, 2.66, 2.77, 2.89,
+        3.02, 3.17, 3.33, 3.50, 3.69, 3.91, 4.16, 4.29, 4.43, 4.59,
+        4.75, 4.93, 5.12, 5.32, 5.54, 5.78, 6.05, 6.33, 6.65, 7.00,
+        7.39, 7.82, 8.31, 8.58, 8.87, 9.17, 9.50, 9.85, 10.23, 10.64,
+        11.08, 11.57, 12.09, 12.67, 13.30, 14.00, 14.78, 15.65, 15.65, 16.63,
+        17.73, 19.00, 20.46, 22.17, 24.18, 26.60, 29.56, 33.25, 38.00, 44.33,
+        53.20, 66.50, 88.67, and 133.00)
+        ufm_config: Same as `ufm_config` parameter in `efb_gen`.
