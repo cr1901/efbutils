@@ -99,7 +99,7 @@ EfbWishbone = Signature({
     "dat_w": Out(8),
     "dat_r": In(8),
     "ack": In(1),
-    "irq": Out(1)
+    "irq": In(1)
 })
 
 
