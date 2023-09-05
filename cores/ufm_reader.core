@@ -42,15 +42,8 @@ filesets:
 
 targets:
   default: &default
-    filesets: [base, demo]
+    filesets: [demo]
     toplevel: top
-    parameters:
-      - osch_freq=24.18
-      - init_mem=init.mem
-      - zero_mem=false
-      - start_offset=32672 # 2042*16
-      - size=64
-      - device=7000L
     generate: []
 
   sim_page:
@@ -125,65 +118,6 @@ generate:
       # it after things are working on the Amaranth side.
       ufm_config: { init_mem: init.mem, start_page: 2042, num_pages: 4, zero_mem: false}
 
-parameters:
-  osch_freq:
-    datatype: str
-    description: |
-        OSCH frequency string, twice the UART clock.
-        
-        (Valid values are: 2.08, 2.15, 2.22, 2.29, 2.38, 2.46, 2.56, 2.66, 2.77, 2.89,
-        3.02, 3.17, 3.33, 3.50, 3.69, 3.91, 4.16, 4.29, 4.43, 4.59,
-        4.75, 4.93, 5.12, 5.32, 5.54, 5.78, 6.05, 6.33, 6.65, 7.00,
-        7.39, 7.82, 8.31, 8.58, 8.87, 9.17, 9.50, 9.85, 10.23, 10.64,
-        11.08, 11.57, 12.09, 12.67, 13.30, 14.00, 14.78, 15.65, 15.65, 16.63,
-        17.73, 19.00, 20.46, 22.17, 24.18, 26.60, 29.56, 33.25, 38.00, 44.33,
-        53.20, 66.50, 88.67, and 133.00)
-    paramtype: vlogparam
-
-  init_mem:
-    datatype: file
-    default: init.mem
-    description: |
-        User Flash Memory initialization file location. Relative paths are
-        converted to absolute; the default value of "init.mem" is an exception
-        due to FuseSoC quirks.
-        
-        Do not wrap in quotes- this may cause Diamond
-        to emit a JEDEC file which initializes UFM to all zeroes.
-    paramtype: vlogparam
-
-  zero_mem:
-    datatype: bool
-    default: false
-    description: |
-        Initialize UFM to all zeros. init_mem, start_offset, and size are
-        ignored if this parameter is set to "true".
-    paramtype: vlogparam
-
-  start_offset:
-    datatype: int
-    default: 32672 # 2042*16
-    description: |
-      Byte offset at which to start reading the UFM. Ignored if zero_mem
-      is "true".
-    paramtype: vlogparam
-
-  size:
-    datatype: int
-    default: 64
-    description: |
-      Number of bytes of the UFM starting from start_offset to read. Typically
-      set to the size of init_mem. Ignored if zero_mem is "true".
-    paramtype: vlogparam
-
-  device:
-    datatype: str
-    default: 7000L
-    description: |
-      Current device. Internal parameter that works around FuseSoC quirks.
-      Should not be set by the user.
-    paramtype: vlogparam
-
 scripts:
   gen_jedec:
     cmd: [pnmainc, gen_JEDEC.tcl]
@@ -199,21 +133,6 @@ scripts:
     cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.bit]
 
 generators:
-  amaranth_uart_gen:
-    interpreter: python3
-    command: gen.py
-    description: |
-      Generate a simple UART with configurable divisor. For a
-      given clock rate and desired baud rate, the `divisor` parameter is
-      calculated by: int(clk_rate // baud_rate).
-
-      The generated core ports are:
-      rx, tx_ack, tx_rdy, tx_data, rx_ack, rx_rdy, rx_data, clk, rst, tx.
-
-      parameters:
-        divisor (int): Divisor used to set baud rate. Controls how
-        many clock cycles to wait before incrementing internal timers.
-
   page_buffer_gen:
     interpreter: python3
     command: gen.py
