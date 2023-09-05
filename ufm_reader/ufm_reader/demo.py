@@ -41,7 +41,7 @@ class Demo(Component):
                                        o_CDIVX=ClockSignal("por"))
         m.submodules.osch = \
             Instance("OSCH",
-                     p_NOM_FREQ=self.efb_config["efb_wb_clk_freq"],
+                     p_NOM_FREQ=str(self.efb_config["efb_wb_clk_freq"]),
                      i_STDBY=C(0),
                      o_OSC=ClockSignal("por2x"))
         m.submodules.wait = wait = \

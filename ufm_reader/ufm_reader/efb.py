@@ -69,7 +69,7 @@ class EFB(Component):
 
         self.params.update({
             "p_UFM_INIT_FILE_NAME": self.ufm_config["init_mem"],
-            "p_UFM_INIT_ALL_ZEROS": self.ufm_config["zero_mem"],
+            "p_UFM_INIT_ALL_ZEROS": "ENABLED" if self.ufm_config["zero_mem"] else "DISABLED",  # noqa: E501
             "p_UFM_INIT_START_PAGE": start_page,
             "p_UFM_INIT_PAGES": init_pages,
             "p_EFB_UFM": "ENABLED"
