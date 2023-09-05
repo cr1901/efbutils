@@ -7,8 +7,8 @@ class PageBufferGenerator(AmaranthGenerator):
     output_file = "page_buffer.v"
     module_name = "page_buffer"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data=None):
+        super().__init__(data)
 
     # Generate a core to be included in another project.
     def create_module(self):
@@ -20,5 +20,9 @@ class PageBufferGenerator(AmaranthGenerator):
         return (m, ios)
 
 
+def main(data=None):
+    PageBufferGenerator(data).generate()
+
+
 if __name__ == "__main__":
-    PageBufferGenerator().generate()
+    main()
