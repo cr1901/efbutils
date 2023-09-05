@@ -1,4 +1,4 @@
-from amgen import AmaranthGenerator
+from .amgen import AmaranthGenerator
 
 from amaranth_stdio import serial
 

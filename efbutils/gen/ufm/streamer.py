@@ -1,6 +1,6 @@
-from amgen import AmaranthGenerator
+from ..amgen import AmaranthGenerator
 
-from ufm_reader.streamer import Streamer
+from ...ufm.reader.streamer import Streamer
 
 
 class StreamerGenerator(AmaranthGenerator):

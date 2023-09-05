@@ -9,35 +9,35 @@ filesets:
   demo:
     <<: *base
     files:
-      - data/init.mem:
+      - ufm_reader/data/init.mem:
           file_type: user
           # Prior art: https://github.com/fusesoc/fusesoc-cores/blob/0d296c87a83a5d1d65b219ca0cb6d49d420c91e5/SD-card-controller/SD-card-controller-0-r3.core#L51
           copyto: init.mem
-      - "tool_diamond ? (scripts/gen_JEDEC.tcl)":
+      - "tool_diamond ? (ufm_reader/scripts/gen_JEDEC.tcl)":
           file_type: user
           copyto: gen_JEDEC.tcl
-      - "tool_diamond ? (scripts/cp_outputs.tcl)":
+      - "tool_diamond ? (ufm_reader/scripts/cp_outputs.tcl)":
           file_type: user
           copyto: cp_outputs.tcl
 
   page_tb:
     files:
-      - tb/page_tb.v
+      - ufm_reader/tb/page_tb.v
     file_type: verilogSource
 
   lcmxo2_7000he_b_evn:
     files:
-      - data/lcmxo2_7000he_b_evn.lpf:
+      - ufm_reader/data/lcmxo2_7000he_b_evn.lpf:
           file_type: LPF
 
   tinyfpga_ax:
     files:
-      - data/tinyfpga_ax.lpf:
+      - ufm_reader/data/tinyfpga_ax.lpf:
           file_type: LPF
 
   step_mxo2:
     files:
-      - data/step_mxo2.lpf:
+      - ufm_reader/data/step_mxo2.lpf:
           file_type: LPF
 
 targets:
@@ -123,7 +123,7 @@ generate:
       efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }
       # Page granularity is temporary until I have a good opportunity to change
       # it after things are working on the Amaranth side.
-      ufm_config: { init_mem: "init.mem", start_page: 2042, num_pages: 4, zero_mem: false}
+      ufm_config: { init_mem: init.mem, start_page: 2042, num_pages: 4, zero_mem: false}
 
 parameters:
   osch_freq:
@@ -201,7 +201,7 @@ scripts:
 generators:
   amaranth_uart_gen:
     interpreter: python3
-    command: gen/uart.py
+    command: gen.py
     description: |
       Generate a simple UART with configurable divisor. For a
       given clock rate and desired baud rate, the `divisor` parameter is
@@ -216,19 +216,19 @@ generators:
 
   page_buffer_gen:
     interpreter: python3
-    command: gen/page_buffer.py
+    command: gen.py
     description: |
       Generate the page_buffer Amaranth module into Verilog.
 
   reader_gen:
     interpreter: python3
-    command: gen/reader.py
+    command: gen.py
     description: |
       Generate the ufm_reader Amaranth module into Verilog.
 
   efb_gen:
     interpreter: python3
-    command: gen/efb.py
+    command: gen.py
     description: |
       Generate an EFB module using an Amaranth `Instance`. YAML parameters
       are converted to Python dictionaries to configure the IP.
@@ -253,7 +253,7 @@ generators:
 
   demo_gen:
     interpreter: python3
-    command: gen/demo.py
+    command: gen.py
     description: |
       Generate a demo for MachXO2 boards that programs the UFM via JTAG and
       prints the string to a serial port.

@@ -1,17 +1,18 @@
-from amgen import AmaranthGenerator
+from ..amgen import AmaranthGenerator
 
-from ufm_reader.demo import Demo
+from ...ufm.reader.demo import Demo
 
 
 class DemoGenerator(AmaranthGenerator):
     output_file = "demo.v"
     module_name = "top"
 
-    def __init__(self):
-        super().__init__()
-        self.num_leds = self.config.get("num_leds", 1)
-        self.efb_config = self.config.get("efb_config", None)
-        self.ufm_config = self.config.get("ufm_config", None)
+    def __init__(self, data=None):
+        super().__init__(data)
+        if data:
+            self.num_leds = self.config.get("num_leds", 1)
+            self.efb_config = self.config.get("efb_config", None)
+            self.ufm_config = self.config.get("ufm_config", None)
 
     # Generate a core to be included in another project.
     def create_module(self):
@@ -23,5 +24,9 @@ class DemoGenerator(AmaranthGenerator):
         return (m, ios)
 
 
+def main(data=None):
+    DemoGenerator(data).generate()
+
+
 if __name__ == "__main__":
-    DemoGenerator().generate()
+    main()

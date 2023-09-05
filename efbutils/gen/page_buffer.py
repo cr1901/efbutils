@@ -1,6 +1,6 @@
-from amgen import AmaranthGenerator
+from .amgen import AmaranthGenerator
 
-from ufm_reader.page_buffer import PageBuffer
+from ..ufm.reader.page_buffer import PageBuffer
 
 
 class PageBufferGenerator(AmaranthGenerator):

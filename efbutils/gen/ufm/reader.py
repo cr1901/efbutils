@@ -1,6 +1,6 @@
-from amgen import AmaranthGenerator
+from ..amgen import AmaranthGenerator
 
-from ufm_reader.reader import Reader
+from ...ufm.reader.reader import Reader
 
 
 class ReaderGenerator(AmaranthGenerator):

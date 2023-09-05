@@ -25,9 +25,7 @@ may look like the following (use `export PATH=/c/lscc/diamond/3.12/bin/lin64:$PA
 on Linux systems):
 
 ```
-fusesoc library add fusesoc-cores https://github.com/fusesoc/fusesoc-cores
-fusesoc library add ufm_reader ufm_reader/
-fusesoc library add migen_uart https://github.com/cr1901/migen_uart
+fusesoc library add efbutils cores/
 export PATH=/c/lscc/diamond/3.12/bin/nt64:$PATH
 fusesoc run --target lcmxo2_7000he_b_evn cr1901:efbutils:ufm_reader
 ```

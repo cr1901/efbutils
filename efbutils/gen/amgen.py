@@ -1,19 +1,13 @@
-from pathlib import Path
-import sys
-
 from amaranth.back import verilog
 from fusesoc.capi2.generator import Generator
-
-# Provide path to actual ufm_reader module for convenience.
-sys.path += [str(Path(__file__).resolve().parent.parent)]
 
 
 class AmaranthGenerator(Generator):
     output_file = "top.v"
     module_name = "top"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data=None):
+        super().__init__(data)
 
     def create_module(self):
         raise NotImplementedError("Subclasses are expected to generate an Amaranth module.")  # noqa: E501

@@ -1,6 +1,6 @@
-from amgen import AmaranthGenerator
+from .amgen import AmaranthGenerator
 
-from ufm_reader.efb import EFB
+from ..ufm.reader.efb import EFB
 
 
 class EFBGenerator(AmaranthGenerator):
