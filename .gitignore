@@ -1,11 +1,19 @@
+# Amaranth
 build/
-/deps/efb_define_def.v
-/deps/EFB_UFM.v
-/deps/ufm_wb_top.v
-/deps/USR_MEM.v
-/fusesoc_libraries/
-/fusesoc.conf
+
+# fusesoc
+fusesoc_libraries/
+fusesoc.conf
+
+# Python
 __pycache__/
+
+# pytest
+.pytest_cache/
 *.vcd
 *.gtkw
-.pytest_cache/
+
+# pdm
+/.pdm-plugins
+/.pdm-python
+/.venv

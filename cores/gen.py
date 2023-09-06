@@ -5,7 +5,7 @@ import sys
 from fusesoc.utils import yaml_fread
 
 # Provide path to actual efbutils module for convenience.
-sys.path += [str(Path(__file__).resolve().parent.parent)]
+sys.path += [str(Path(__file__).resolve().parent.parent / "src")]
 
 generator_to_module_map = {
     "demo_lcmxo2_7000he_b_evn": "efbutils.gen.ufm.demo",

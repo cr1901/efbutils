@@ -54,7 +54,7 @@ SUBSTS = {
 
 @pytest.fixture
 def fusesoc_init(tmp_path):
-    efb_path = Path(efbutils.__file__).resolve().parent.parent / "cores"
+    efb_path = Path(efbutils.__file__).resolve().parent.parent.parent / "cores"
     subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
                            "library", "add", "efbutils", efb_path])
     subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
