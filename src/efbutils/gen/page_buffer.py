@@ -12,12 +12,7 @@ class PageBufferGenerator(AmaranthGenerator):
 
     # Generate a core to be included in another project.
     def create_module(self):
-        m = PageBuffer()
-        ios = [m.rand.data, m.rand.addr, m.rand.read_en,
-               m.rand.flush, m.rand.valid, m.seq.data,
-               m.seq.addr, m.seq.stb, m.seq.ack]
-
-        return (m, ios)
+        return PageBuffer()
 
 
 def main(data=None):

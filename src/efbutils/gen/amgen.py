@@ -13,12 +13,10 @@ class AmaranthGenerator(Generator):
         raise NotImplementedError("Subclasses are expected to generate an Amaranth module.")  # noqa: E501
 
     def generate(self):
-        (module, ios) = self.create_module()
+        module = self.create_module()
 
         with open(self.output_file, "w") as fp:
-            fp.write(str(verilog.convert(module,
-                                         name=self.module_name,
-                                         ports=ios)))
+            fp.write(str(verilog.convert(module, name=self.module_name)))
 
         files = [{self.output_file: {"file_type": "verilogSource"}}]
         self.add_files(files)

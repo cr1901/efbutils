@@ -14,16 +14,12 @@ class EFBGenerator(AmaranthGenerator):
 
     # Generate a core to be included in another project.
     def create_module(self):
-        m = EFB(efb_config=self.efb_config,
-                ufm_config=self.ufm_config,
-                tc_config=None,
-                spi_config=None,
-                i2c1_config=None,
-                i2c2_config=None)
-        ios = [m.bus.cyc, m.bus.stb, m.bus.we, m.bus.adr, m.bus.dat_w,
-               m.bus.dat_r, m.bus.ack, m.bus.irq]
-
-        return (m, ios)
+        return EFB(efb_config=self.efb_config,
+                   ufm_config=self.ufm_config,
+                   tc_config=None,
+                   spi_config=None,
+                   i2c1_config=None,
+                   i2c2_config=None)
 
 
 if __name__ == "__main__":

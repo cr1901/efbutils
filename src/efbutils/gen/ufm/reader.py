@@ -12,12 +12,7 @@ class ReaderGenerator(AmaranthGenerator):
 
     # Generate a core to be included in another project.
     def create_module(self):
-        m = Reader()
-        ios = [m.bus.data, m.bus.addr, m.bus.read_en, m.bus.valid,
-               m.bus.stall, m.efb.cyc, m.efb.stb, m.efb.we, m.efb.adr,
-               m.efb.dat_w, m.efb.dat_r, m.efb.ack]
-
-        return (m, ios)
+        return Reader()
 
 
 if __name__ == "__main__":
