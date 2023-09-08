@@ -66,6 +66,7 @@ class PageBuffer(Component):
                     ]
 
                     with m.If(wr_ptr == 15):
+                        m.d.sync += self.seq.stb.eq(0)
                         m.next = "VALID"
 
             with m.State("VALID"):
