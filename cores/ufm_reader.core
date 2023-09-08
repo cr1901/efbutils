@@ -20,11 +20,6 @@ filesets:
           file_type: user
           copyto: cp_outputs.tcl
 
-  page_tb:
-    files:
-      - ufm_reader/tb/page_tb.v
-    file_type: verilogSource
-
   lcmxo2_7000he_b_evn:
     files:
       - ufm_reader/data/lcmxo2_7000he_b_evn.lpf:
@@ -45,12 +40,6 @@ targets:
     filesets: [demo]
     toplevel: top
     generate: []
-
-  sim_page:
-    filesets: [base, page_tb]
-    toplevel: top
-    default_tool: icarus
-    generate: [sim_uart, page_buffer]
 
   lcmxo2_7000he_b_evn:
     <<: *default
@@ -103,11 +92,6 @@ generate:
     generator: amaranth_uart_gen
     parameters:
       divisor: 1259 # 9600 at 12.09 MHz
-
-  sim_uart:
-    <<: *basic_uart
-    parameters:
-      divisor: 21 # 576000 at 12.09 MHz
 
   demo_lcmxo2_7000he_b_evn:
     generator: demo_gen
