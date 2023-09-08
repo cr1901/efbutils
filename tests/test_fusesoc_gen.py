@@ -49,6 +49,9 @@ SUBSTS = {
                   "efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }, " +  # noqa: E501
                   "ufm_config: { init_mem: init.mem, start_page: 2042, num_pages: 4, zero_mem: false } }"  # noqa: E501
     },
+    "lcmxo2_7000he_b_evn": {
+        "core_file": "cr1901:efbutils:ufm_reader"
+    }
 }
 
 
@@ -62,9 +65,17 @@ def fusesoc_init(tmp_path):
 
 
 @pytest.mark.parametrize("core", ["page_buffer", "demo_lcmxo2_7000he_b_evn"])
-def test_page_buffer_gen(fusesoc_init, tmp_path, core):
+def test_fusesoc_generator(fusesoc_init, tmp_path, core):
     p = (tmp_path / core).with_suffix(".core")
     p.write_text(CORE_FILE.substitute(SUBSTS[core]))
     subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
                            "run", "--setup", "--work-root", tmp_path / "build",
                            f"cr1901:efbutils:gentest-{core}"])
+
+
+# TODO: test_fusesoc_build for open toolchain as EFB support becomes ready.
+@pytest.mark.parametrize("core", ["lcmxo2_7000he_b_evn"])
+def test_fusesoc_setup(fusesoc_init, tmp_path, core):
+    subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
+                           "run", "--setup", "--work-root", tmp_path / "build",
+                           "--target", core, SUBSTS[core]["core_file"]])
