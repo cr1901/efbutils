@@ -7,8 +7,8 @@ class EFBGenerator(AmaranthGenerator):
     output_file = "efb.v"
     module_name = "EFBUtils_EFB"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data=None):
+        super().__init__(data)
         self.efb_config = self.config.get("efb_config", None)
         self.ufm_config = self.config.get("ufm_config", None)
 
@@ -22,5 +22,9 @@ class EFBGenerator(AmaranthGenerator):
                    i2c2_config=None)
 
 
+def main(data=None):
+    EFBGenerator(data).generate()
+
+
 if __name__ == "__main__":
-    EFBGenerator().generate()
+    main()

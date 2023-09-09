@@ -34,13 +34,29 @@ generate:
 
 # Module: (generator_lib, generator_name)
 SUBSTS = {
+    "ufm_reader": {
+        "depend": ["cr1901:efbutils:ufm_reader"],
+        "generator": "ufm_reader_gen",
+        "params": {}
+    },
     "page_buffer": {
         "depend": ["cr1901:efbutils:page_buffer"],
         "generator": "page_buffer_gen",
         "params": {}
     },
+    "efb": {
+        "depend": ["cr1901:efbutils:efb"],
+        "generator": "efb_gen",
+        "params": {
+            "efb_config": {"dev_density": "7000L", "efb_wb_clk_freq": 24.18},
+            "ufm_config": {"init_mem": "init.mem",
+                           "start_page": 2042,
+                           "num_pages": 4,
+                           "zero_mem": False}
+        }
+    },
     "demo_lcmxo2_7000he_b_evn": {
-        "depend": ["cr1901:efbutils:ufm_reader"],
+        "depend": ["cr1901:efbutils:reader_demo"],
         "generator": "demo_gen",
         "params": {
             "num_leds": 8,
@@ -52,7 +68,7 @@ SUBSTS = {
         },
     },
     "lcmxo2_7000he_b_evn": {
-        "core_file": "cr1901:efbutils:ufm_reader"
+        "core_file": "cr1901:efbutils:reader_demo"
     }
 }
 
@@ -74,7 +90,10 @@ def gentest_core(request):
     return config
 
 
-@pytest.mark.parametrize("core", ["page_buffer", "demo_lcmxo2_7000he_b_evn"])
+@pytest.mark.parametrize("core", ["page_buffer",
+                                  "ufm_reader",
+                                  "efb",
+                                  "demo_lcmxo2_7000he_b_evn"])
 def test_fusesoc_generator(gentest_core, fusesoc_init, tmp_path, core):
     gentest_core["name"] = f"cr1901:efbutils:gentest-{core}:0.0.1"
     gentest_core["filesets"]["generators"]["depend"] = SUBSTS[core]["depend"]

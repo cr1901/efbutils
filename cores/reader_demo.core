@@ -1,0 +1,139 @@
+CAPI=2:
+name: cr1901:efbutils:reader_demo:0.0.1
+description: MachXO2/3 User Flash Memory reader demo.
+
+filesets:
+  base: &base
+    file_type: verilogSource
+
+  demo:
+    <<: *base
+    files:
+      - ufm_reader/data/init.mem:
+          file_type: user
+          # Prior art: https://github.com/fusesoc/fusesoc-cores/blob/0d296c87a83a5d1d65b219ca0cb6d49d420c91e5/SD-card-controller/SD-card-controller-0-r3.core#L51
+          copyto: init.mem
+      - "tool_diamond ? (ufm_reader/scripts/gen_JEDEC.tcl)":
+          file_type: user
+          copyto: gen_JEDEC.tcl
+      - "tool_diamond ? (ufm_reader/scripts/cp_outputs.tcl)":
+          file_type: user
+          copyto: cp_outputs.tcl
+
+  lcmxo2_7000he_b_evn:
+    files:
+      - ufm_reader/data/lcmxo2_7000he_b_evn.lpf:
+          file_type: LPF
+
+  tinyfpga_ax:
+    files:
+      - ufm_reader/data/tinyfpga_ax.lpf:
+          file_type: LPF
+
+  step_mxo2:
+    files:
+      - ufm_reader/data/step_mxo2.lpf:
+          file_type: LPF
+
+targets:
+  default: &default
+    filesets: [demo]
+    toplevel: top
+    generate: []
+
+  lcmxo2_7000he_b_evn:
+    <<: *default
+    filesets_append: [lcmxo2_7000he_b_evn]
+    default_tool: diamond
+    generate_append: [demo_lcmxo2_7000he_b_evn]
+    flags:
+      sram: false # Do SRAM programming.
+    hooks:
+      post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
+      post_run: ["tool_diamond ? (sram ? (ofl_evn_sram))", "tool_diamond ? (!sram ? (ofl_evn))"]
+    tools:
+      diamond:
+        part: LCMXO2-7000HE-4TG144C
+
+  tinyfpga_ax:
+    <<: *default
+    parameters_append:
+      - start_offset=8112
+      - device=1200L    
+    filesets_append: [tinyfpga_ax]
+    default_tool: diamond
+    generate: [basic_uart]
+    flags:
+      sram: false # Do SRAM programming.
+    hooks:
+      post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
+    tools:
+      diamond:
+        part: LCMXO2-1200HC-4SG32C
+
+  step_mxo2:
+    <<: *default
+    parameters_append:
+      - start_offset=12208
+      - device=4000L    
+    filesets_append: [step_mxo2]
+    default_tool: diamond
+    generate: [basic_uart]
+    flags:
+      sram: false # Do SRAM programming.
+    hooks:
+      post_build: ["tool_diamond ? (gen_jedec)", "tool_diamond ? (cp_outputs)"]
+    tools:
+      diamond:
+        part: LCMXO2-4000HC-4MG132C
+
+generate:
+  basic_uart: &basic_uart
+    generator: amaranth_uart_gen
+    parameters:
+      divisor: 1259 # 9600 at 12.09 MHz
+
+  demo_lcmxo2_7000he_b_evn:
+    generator: demo_gen
+    parameters:
+      num_leds: 8
+      efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }
+      # Page granularity is temporary until I have a good opportunity to change
+      # it after things are working on the Amaranth side.
+      ufm_config: { init_mem: init.mem, start_page: 2042, num_pages: 4, zero_mem: false}
+
+scripts:
+  gen_jedec:
+    cmd: [pnmainc, gen_JEDEC.tcl]
+    filesets: [demo]
+
+  cp_outputs:
+    cmd: [pnmainc, cp_outputs.tcl, cr1901_efbutils_ufm_reader_0_0_1]
+
+  ofl_evn:
+    cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.jed]
+
+  ofl_evn_sram:
+    cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.bit]
+
+generators:
+  demo_gen:
+    interpreter: python3
+    command: demo_gen.py
+    description: |
+      Generate a demo for MachXO2 boards that programs the UFM via JTAG and
+      prints the string to a serial port.
+      
+      parameters:
+        num_leds: Number of LEDs to use for showing signal values.
+        efb_config: Same as `efb_config` parameter in `efb_gen`.
+        `efb_wb_clk_freq` must be OSCH frequency, which is twice the UART clock.
+        
+        (Valid values are: 2.08, 2.15, 2.22, 2.29, 2.38, 2.46, 2.56, 2.66, 2.77, 2.89,
+        3.02, 3.17, 3.33, 3.50, 3.69, 3.91, 4.16, 4.29, 4.43, 4.59,
+        4.75, 4.93, 5.12, 5.32, 5.54, 5.78, 6.05, 6.33, 6.65, 7.00,
+        7.39, 7.82, 8.31, 8.58, 8.87, 9.17, 9.50, 9.85, 10.23, 10.64,
+        11.08, 11.57, 12.09, 12.67, 13.30, 14.00, 14.78, 15.65, 15.65, 16.63,
+        17.73, 19.00, 20.46, 22.17, 24.18, 26.60, 29.56, 33.25, 38.00, 44.33,
+        53.20, 66.50, 88.67, and 133.00)
+        ufm_config: Same as `ufm_config` parameter in `efb_gen`.
