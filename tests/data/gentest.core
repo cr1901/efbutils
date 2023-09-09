@@ -1,0 +1,23 @@
+CAPI=2:
+name: <name>
+description: EFBUtils Generator test
+
+filesets:
+    generators:
+        depend: {}
+
+targets:
+  default: &default
+    toplevel: top
+    filesets: [generators]
+    default_tool: diamond
+    generate: [module]
+    tools:
+        diamond:
+            part: LCMXO2-1200HC-4SG32C
+
+
+generate:
+  module:
+    generator: {}
+    parameters: {}

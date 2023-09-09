@@ -117,12 +117,6 @@ scripts:
     cmd: [openFPGALoader, -b, machXO2EVN, cr1901_efbutils_ufm_reader_0_0_1.bit]
 
 generators:
-  page_buffer_gen:
-    interpreter: python3
-    command: gen.py
-    description: |
-      Generate the page_buffer Amaranth module into Verilog.
-
   reader_gen:
     interpreter: python3
     command: gen.py
@@ -156,7 +150,7 @@ generators:
 
   demo_gen:
     interpreter: python3
-    command: gen.py
+    command: demo_gen.py
     description: |
       Generate a demo for MachXO2 boards that programs the UFM via JTAG and
       prints the string to a serial port.

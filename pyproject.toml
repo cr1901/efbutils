@@ -31,4 +31,5 @@ addopts = "--ignore=fusesoc_libraries"  # "No module named 'migen'"... not sure 
 [tool.pdm.dev-dependencies]
 test = [
     "pytest>=7.4.1",
+    "PyYAML>=6.0.1"
 ]

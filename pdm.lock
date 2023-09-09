@@ -6,7 +6,7 @@ groups = ["default", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:291b010cf747daa4151fd8dd11b1aca8b4182cc7d07e3bd7552a0e381d6fa4ba"
+content_hash = "sha256:fdbcd5c73cbf88267a0ba44750526be000b0d4d16a8c2fdf12e8f5fa24b5228c"
 
 [[package]]
 name = "amaranth"

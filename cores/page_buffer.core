@@ -1,0 +1,10 @@
+CAPI=2:
+name: cr1901:efbutils:page_buffer:0.0.1
+description: Generic random-access byte interface to page-granularity storage.
+
+generators:
+  page_buffer_gen:
+    interpreter: python3
+    command: page_buffer_gen.py
+    description: |
+      Generate the page_buffer Amaranth module into Verilog.

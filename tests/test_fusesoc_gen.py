@@ -3,6 +3,7 @@ import pytest
 from pathlib import Path
 import string
 import subprocess
+import yaml
 
 
 CORE_FILE = string.Template("""CAPI=2:
@@ -34,20 +35,21 @@ generate:
 # Module: (generator_lib, generator_name)
 SUBSTS = {
     "page_buffer": {
-        "module": "page_buffer",
-        "generator_lib": "cr1901:efbutils:ufm_reader",
-        "generator_name": "page_buffer_gen",
-        "params": "{}"
+        "depend": ["cr1901:efbutils:page_buffer"],
+        "generator": "page_buffer_gen",
+        "params": {}
     },
     "demo_lcmxo2_7000he_b_evn": {
-        "module": "demo_lcmxo2_7000he_b_evn",
-        "generator_lib": "cr1901:efbutils:ufm_reader",
-        "generator_name": "demo_gen",
-        # Since YAML is whitespace sensitive, put the nested map all on one
-        # line for tests.
-        "params": "{ num_leds: 8, " +
-                  "efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }, " +  # noqa: E501
-                  "ufm_config: { init_mem: init.mem, start_page: 2042, num_pages: 4, zero_mem: false } }"  # noqa: E501
+        "depend": ["cr1901:efbutils:ufm_reader"],
+        "generator": "demo_gen",
+        "params": {
+            "num_leds": 8,
+            "efb_config": {"dev_density": "7000L", "efb_wb_clk_freq": 24.18},
+            "ufm_config": {"init_mem": "init.mem",
+                           "start_page": 2042,
+                           "num_pages": 4,
+                           "zero_mem": False}
+        },
     },
     "lcmxo2_7000he_b_evn": {
         "core_file": "cr1901:efbutils:ufm_reader"
@@ -64,10 +66,24 @@ def fusesoc_init(tmp_path):
                            "library", "add", "gentest", tmp_path])
 
 
+@pytest.fixture
+def gentest_core(request):
+    core_file = Path(request.module.__file__).parent / "data" / "gentest.core"
+    with open(core_file) as f:
+        config = yaml.safe_load(f)
+    return config
+
+
 @pytest.mark.parametrize("core", ["page_buffer", "demo_lcmxo2_7000he_b_evn"])
-def test_fusesoc_generator(fusesoc_init, tmp_path, core):
-    p = (tmp_path / core).with_suffix(".core")
-    p.write_text(CORE_FILE.substitute(SUBSTS[core]))
+def test_fusesoc_generator(gentest_core, fusesoc_init, tmp_path, core):
+    gentest_core["name"] = f"cr1901:efbutils:gentest-{core}:0.0.1"
+    gentest_core["filesets"]["generators"]["depend"] = SUBSTS[core]["depend"]
+    gentest_core["generate"]["module"]["generator"] = SUBSTS[core]["generator"]
+    gentest_core["generate"]["module"]["parameters"] = SUBSTS[core]["params"]
+
+    with open(tmp_path / "gentest.core", 'w') as f:
+        yaml.dump(gentest_core, f)
+
     subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
                            "run", "--setup", "--work-root", tmp_path / "build",
                            f"cr1901:efbutils:gentest-{core}"])
