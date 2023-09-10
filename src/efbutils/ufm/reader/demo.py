@@ -76,7 +76,8 @@ class Demo(Component):
         if self.num_leds > 5:
             m.d.comb += self.leds[5].eq(~do_read)
         if self.num_leds > 7:
-            used_addr_bus_width = log2_int(self.ufm_config.num_pages + 4)
+            used_addr_bus_width = log2_int(self.ufm_config.num_pages + 4,
+                                           need_pow2=False)
             high_addr_bits = ~curr_byte_addr[used_addr_bus_width-2:used_addr_bus_width]  # noqa: E501
             m.d.comb += self.leds[6:8].eq(high_addr_bits)
 

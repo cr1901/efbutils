@@ -1,36 +1,9 @@
 import efbutils
 import pytest
 from pathlib import Path
-import string
 import subprocess
 import yaml
 
-
-CORE_FILE = string.Template("""CAPI=2:
-name: cr1901:efbutils:gentest-${module}:0.0.1
-description: EFBUtils Generator test
-
-filesets:
-    generators:
-        depend:
-            - ${generator_lib}
-
-targets:
-  default: &default
-    toplevel: top
-    filesets: [generators]
-    default_tool: diamond
-    generate: [${module}]
-    tools:
-        diamond:
-            part: LCMXO2-1200HC-4SG32C
-
-
-generate:
-  ${module}:
-    generator: ${generator_name}
-    parameters: ${params}
-""")
 
 # Module: (generator_lib, generator_name)
 SUBSTS = {
