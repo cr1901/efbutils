@@ -1,6 +1,7 @@
 from ..amgen import AmaranthGenerator
 
 from ...ufm.reader.demo import Demo
+from ...ufm.reader.efb import EFBConfig, UFMConfig
 
 
 class DemoGenerator(AmaranthGenerator):
@@ -17,8 +18,8 @@ class DemoGenerator(AmaranthGenerator):
     # Generate a core to be included in another project.
     def create_module(self):
         return Demo(num_leds=self.num_leds,
-                    efb_config=self.efb_config,
-                    ufm_config=self.ufm_config)
+                    efb_config=EFBConfig.from_dict(self.efb_config),
+                    ufm_config=UFMConfig.from_dict(self.ufm_config))
 
 
 def main(data=None):

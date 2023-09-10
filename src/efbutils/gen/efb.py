@@ -1,6 +1,6 @@
 from .amgen import AmaranthGenerator
 
-from ..ufm.reader.efb import EFB
+from ..ufm.reader.efb import EFB, EFBConfig, UFMConfig
 
 
 class EFBGenerator(AmaranthGenerator):
@@ -14,8 +14,8 @@ class EFBGenerator(AmaranthGenerator):
 
     # Generate a core to be included in another project.
     def create_module(self):
-        return EFB(efb_config=self.efb_config,
-                   ufm_config=self.ufm_config,
+        return EFB(efb_config=EFBConfig.from_dict(self.efb_config),
+                   ufm_config=UFMConfig.from_dict(self.ufm_config),
                    tc_config=None,
                    spi_config=None,
                    i2c1_config=None,

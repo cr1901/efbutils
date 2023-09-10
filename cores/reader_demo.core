@@ -97,7 +97,7 @@ generate:
     generator: demo_gen
     parameters:
       num_leds: 8
-      efb_config: { dev_density: 7000L, efb_wb_clk_freq: 24.18 }
+      efb_config: { dev_density: 7000L, wb_clk_freq: 24.18 }
       # Page granularity is temporary until I have a good opportunity to change
       # it after things are working on the Amaranth side.
       ufm_config: { init_mem: init.mem, start_page: 2042, num_pages: 4, zero_mem: false}

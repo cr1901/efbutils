@@ -48,7 +48,7 @@ SUBSTS = {
         "depend": ["cr1901:efbutils:efb"],
         "generator": "efb_gen",
         "params": {
-            "efb_config": {"dev_density": "7000L", "efb_wb_clk_freq": 24.18},
+            "efb_config": {"dev_density": "7000L", "wb_clk_freq": 24.18},
             "ufm_config": {"init_mem": "init.mem",
                            "start_page": 2042,
                            "num_pages": 4,
@@ -60,7 +60,7 @@ SUBSTS = {
         "generator": "demo_gen",
         "params": {
             "num_leds": 8,
-            "efb_config": {"dev_density": "7000L", "efb_wb_clk_freq": 24.18},
+            "efb_config": {"dev_density": "7000L", "wb_clk_freq": 24.18},
             "ufm_config": {"init_mem": "init.mem",
                            "start_page": 2042,
                            "num_pages": 4,

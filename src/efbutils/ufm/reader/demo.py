@@ -4,7 +4,7 @@ from amaranth.lib.wiring import Signature, In, Out, Component, connect
 from amaranth.utils import log2_int
 from amaranth_stdio import serial
 
-from .efb import EFB
+from .efb import EFB, EFBConfig, UFMConfig
 from .reader import Reader, ReaderSignature
 
 
@@ -21,7 +21,9 @@ class Demo(Component):
     def signature(self):
         return demo_signature(self.num_leds)
 
-    def __init__(self, *, num_leds, efb_config, ufm_config):
+    def __init__(self, *, num_leds,
+                 efb_config: EFBConfig,
+                 ufm_config: UFMConfig):
         self.num_leds = num_leds
         super().__init__()
 
@@ -33,7 +35,7 @@ class Demo(Component):
         m = Module()
         m.domains += ClockDomain("cd_por2x", reset_less=True)
 
-        divisor = int((self.efb_config["efb_wb_clk_freq"] * 1e6) // (2*9600))
+        divisor = int((self.efb_config.wb_clk_freq * 1e6) // (2*9600))
         m.submodules.por = POR()
         m.submodules.uart = uart = serial.AsyncSerial(divisor=divisor)
         m.submodules.clkdiv = Instance("CLKDIVC",
@@ -41,11 +43,11 @@ class Demo(Component):
                                        o_CDIVX=ClockSignal("por"))
         m.submodules.osch = \
             Instance("OSCH",
-                     p_NOM_FREQ=str(self.efb_config["efb_wb_clk_freq"]),
+                     p_NOM_FREQ=str(self.efb_config.wb_clk_freq),
                      i_STDBY=C(0),
                      o_OSC=ClockSignal("por2x"))
         m.submodules.wait = wait = \
-            WaitTimer(self.efb_config["efb_wb_clk_freq"])
+            WaitTimer(self.efb_config.wb_clk_freq)
         m.submodules.efb = efb = EFB(efb_config=self.efb_config,
                                      ufm_config=self.ufm_config,
                                      tc_config=None,
@@ -56,7 +58,7 @@ class Demo(Component):
 
         take_break = Signal(1)
         do_read = Signal(1)
-        curr_byte_addr = Signal(15, reset=self.ufm_config["start_page"]*16)
+        curr_byte_addr = Signal(15, reset=self.ufm_config.start_page*16)
 
         connect(m, reader.bus, self._rdr)
         connect(m, efb.bus, reader.efb)
@@ -74,7 +76,7 @@ class Demo(Component):
         if self.num_leds > 5:
             m.d.comb += self.leds[5].eq(~do_read)
         if self.num_leds > 7:
-            used_addr_bus_width = log2_int(self.ufm_config["num_pages"]) + 4
+            used_addr_bus_width = log2_int(self.ufm_config.num_pages + 4)
             high_addr_bits = ~curr_byte_addr[used_addr_bus_width-2:used_addr_bus_width]  # noqa: E501
             m.d.comb += self.leds[6:8].eq(high_addr_bits)
 
@@ -97,11 +99,11 @@ class Demo(Component):
         with m.If(self._rdr.valid & uart.tx.rdy):
             m.d.sync += curr_byte_addr.eq(curr_byte_addr + 1)
 
-            max_addr = (self.ufm_config["start_page"] +
-                        self.ufm_config["num_pages"])*16
+            max_addr = (self.ufm_config.start_page +
+                        self.ufm_config.num_pages)*16
             with m.If(curr_byte_addr == max_addr - 1):
                 m.d.sync += [
-                    curr_byte_addr.eq(self.ufm_config["start_page"]*16),
+                    curr_byte_addr.eq(self.ufm_config.start_page*16),
                     take_break.eq(1)
                 ]
 
@@ -152,3 +154,23 @@ class POR(Elaboratable):
             m.d.por += cnt.eq(cnt + 1)
 
         return m
+
+
+class VerilogDemo(Demo):
+    """Demo class that can be used with Amaranth's CLI to generate Verilog.
+
+       Create JSON dictionaries on the command-line for efb_config and
+       ufm_config "-p" parameters to "amaranth generate", e.g.::
+
+            amaranth generate efbutils.ufm.reader.efb:VerilogEFB \
+            -p efb_config '{ "dev_density": "7000L", "wb_clk_freq": "12.08" }' \
+            -p ufm_config '{ "init_mem": null, "zero_mem": true, "start_page": 0, "num_pages": 2046}' \
+            verilog -v -
+    """  # noqa: E501
+    def __init__(self, *,
+                 num_leds: int,
+                 efb_config: str,
+                 ufm_config: str):
+        super().__init__(num_leds=num_leds,
+                         efb_config=EFBConfig.from_json_str(efb_config),
+                         ufm_config=UFMConfig.from_json_str(ufm_config))

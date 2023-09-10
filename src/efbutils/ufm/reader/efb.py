@@ -9,8 +9,21 @@ from amaranth.lib.wiring import In, Component
 from .sequencer import EfbWishbone
 
 
+class BaseConfig():
+    """Mixin to allow converting to EFB Config dataclasses from various
+       types using classmethods."""
+
+    @classmethod
+    def from_dict(cls, dict):
+        return cls(**dict)
+
+    @classmethod
+    def from_json_str(cls, str):
+        return cls(**json.loads(str))
+
+
 @dataclass
-class UFMConfig:
+class UFMConfig(BaseConfig):
     """Base UFM Config, used by the EFB class."""
     init_mem: Path
     zero_mem: bool
@@ -19,20 +32,10 @@ class UFMConfig:
 
 
 @dataclass
-class EFBConfig:
+class EFBConfig(BaseConfig):
     """Base EFB Config, used by the EFB class."""
     dev_density: str
     wb_clk_freq: str
-
-
-class AmaranthCliEFBConfig(EFBConfig):
-    def __init__(self, str):
-        super().__init__(**json.loads(str))
-
-
-class AmaranthCliUFMConfig(UFMConfig):
-    def __init__(self, str):
-        super().__init__(**json.loads(str))
 
 
 class SimpleUFMConfig(UFMConfig):
@@ -65,7 +68,7 @@ class SimpleUFMConfig(UFMConfig):
             else:
                 num_pages = os.path.getsize(self.filename) // 16 + 1
         else:
-            num_pages = self.end_page[device]
+            num_pages = self.end_page[device] + 1
 
         if zero_mem:
             start_page = 0
@@ -326,8 +329,9 @@ class VerilogEFB(EFB):
             verilog -v -
     """  # noqa: E501
     def __init__(self, *,
-                 efb_config: AmaranthCliEFBConfig,
-                 ufm_config: AmaranthCliUFMConfig):
-        super().__init__(efb_config=efb_config, ufm_config=ufm_config,
+                 efb_config: str,
+                 ufm_config: str):
+        super().__init__(efb_config=EFBConfig.from_json_str(efb_config),
+                         ufm_config=UFMConfig.from_json_str(ufm_config),
                          tc_config=None, spi_config=None, i2c1_config=None,
                          i2c2_config=None)
