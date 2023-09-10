@@ -6,8 +6,7 @@ authors = [
     {name = "William D. Jones", email = "thor0505@comcast.net"},
 ]
 dependencies = [
-    "amaranth @ git+https://github.com/amaranth-lang/amaranth.git",
-    "amaranth-stdio @ git+https://github.com/amaranth-lang/amaranth-stdio",
+    "amaranth @ git+https://github.com/whitequark/amaranth.git@amaranth-cli",
     "fusesoc>=2.2.1",
 ]
 requires-python = ">=3.11"
@@ -27,6 +26,9 @@ markers = [
   "module: top-level module to simulate."
 ]
 addopts = "--ignore=fusesoc_libraries"  # "No module named 'migen'"... not sure what's happening here...
+
+[tool.pdm.resolution.overrides]
+amaranth-stdio = "git+https://github.com/amaranth-lang/amaranth-stdio"
 
 [tool.pdm.dev-dependencies]
 test = [

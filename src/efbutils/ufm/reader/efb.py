@@ -1,7 +1,81 @@
+import os.path
+from dataclasses import dataclass
+import json
+from pathlib import Path
+
 from amaranth import Signal, Module, Instance, ClockSignal, ResetSignal, C
 from amaranth.lib.wiring import In, Component
 
 from .sequencer import EfbWishbone
+
+
+@dataclass
+class UFMConfig:
+    """Base UFM Config, used by the EFB class."""
+    init_mem: Path
+    zero_mem: bool
+    start_page: int
+    num_pages: int
+
+
+@dataclass
+class EFBConfig:
+    """Base EFB Config, used by the EFB class."""
+    dev_density: str
+    wb_clk_freq: str
+
+
+class AmaranthCliEFBConfig(EFBConfig):
+    def __init__(self, str):
+        super().__init__(**json.loads(str))
+
+
+class AmaranthCliUFMConfig(UFMConfig):
+    def __init__(self, str):
+        super().__init__(**json.loads(str))
+
+
+class SimpleUFMConfig(UFMConfig):
+    """Automatically configure UFM Parameters based on input file.
+
+    End of file will automatically be placed at top of UFM, growing
+    downward."""
+
+    end_page = {
+        "7000L": 2045,
+        "4000L": 766,
+        "2000U": 766,
+        "2000L": 638,
+        "1200U": 638,
+        "1200L": 510,
+        "640U": 510,
+        "640L": 190
+    }
+
+    def __init__(self, *, filename, device):
+        filename = Path(filename) if filename else ""
+        zero_mem = bool(filename)
+
+        if filename and not filename.exists():
+            raise FileNotFoundError(filename)
+
+        if filename:
+            if os.path.getsize(filename) % 16 == 0:
+                num_pages = os.path.getsize(self.filename) // 16
+            else:
+                num_pages = os.path.getsize(self.filename) // 16 + 1
+        else:
+            num_pages = self.end_page[device]
+
+        if zero_mem:
+            start_page = 0
+        else:
+            start_page = self.end_page[self.device] - num_pages + 1
+
+        super().__init__(init_mem=filename,
+                         zero_mem=zero_mem,
+                         start_page=start_page,
+                         num_pages=num_pages)
 
 
 class EFB(Component):
@@ -40,35 +114,19 @@ class EFB(Component):
             return
 
         self.params.update({
-            "p_DEV_DENSITY": self.efb_config["dev_density"],
-            "p_EFB_WB_CLK_FREQ": str(self.efb_config["efb_wb_clk_freq"])
+            "p_DEV_DENSITY": self.efb_config.dev_density,
+            "p_EFB_WB_CLK_FREQ": self.efb_config.wb_clk_freq
         })
 
     def map_ufm_config(self):
         if not self.ufm_config:
             return
 
-        ufm_end_page = {
-            "7000L": 2045,
-            "4000L": 766,
-            "2000U": 766,
-            "2000L": 638,
-            "1200U": 638,
-            "1200L": 510,
-            "640U": 510,
-            "640L": 190
-        }
-
-        start_page = 0 if self.ufm_config["zero_mem"] else \
-            self.ufm_config["start_page"]
-        init_pages = ufm_end_page[self.efb_config["dev_density"]] if \
-            self.ufm_config["zero_mem"] else self.ufm_config["num_pages"]
-
         self.params.update({
-            "p_UFM_INIT_FILE_NAME": self.ufm_config["init_mem"],
-            "p_UFM_INIT_ALL_ZEROS": "ENABLED" if self.ufm_config["zero_mem"] else "DISABLED",  # noqa: E501
-            "p_UFM_INIT_START_PAGE": start_page,
-            "p_UFM_INIT_PAGES": init_pages,
+            "p_UFM_INIT_FILE_NAME": self.ufm_config.init_mem if self.ufm_config.init_mem else "",  # noqa: E501  # .UFM_INIT_FILE_NAME({0{1'b0}}) ?!
+            "p_UFM_INIT_ALL_ZEROS": "ENABLED" if self.ufm_config.zero_mem else "DISABLED",  # noqa: E501
+            "p_UFM_INIT_START_PAGE": self.ufm_config.start_page,
+            "p_UFM_INIT_PAGES": self.ufm_config.num_pages,
             "p_EFB_UFM": "ENABLED"
         })
 
@@ -254,3 +312,22 @@ class EFB(Component):
             "o_CFGWAKE": Signal(),
             "o_CFGSTDBY": Signal()
         })
+
+
+class VerilogEFB(EFB):
+    """EFB class that can be used with Amaranth's CLI to generate Verilog.
+
+       Create JSON dictionaries on the command-line for each "-p" parameter
+       to "amaranth generate", e.g.::
+
+            amaranth generate efbutils.ufm.reader.efb:VerilogEFB \
+            -p efb_config '{ "dev_density": "7000L", "wb_clk_freq": "12.08" }' \
+            -p ufm_config '{ "init_mem": null, "zero_mem": true, "start_page": 0, "num_pages": 2046}' \
+            verilog -v -
+    """  # noqa: E501
+    def __init__(self, *,
+                 efb_config: AmaranthCliEFBConfig,
+                 ufm_config: AmaranthCliUFMConfig):
+        super().__init__(efb_config=efb_config, ufm_config=ufm_config,
+                         tc_config=None, spi_config=None, i2c1_config=None,
+                         i2c2_config=None)

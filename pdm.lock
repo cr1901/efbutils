@@ -6,28 +6,19 @@ groups = ["default", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:fdbcd5c73cbf88267a0ba44750526be000b0d4d16a8c2fdf12e8f5fa24b5228c"
+content_hash = "sha256:2136e800e0e1d47ddb6dfc912d1d238411bb869e35ea2b58726d631da244df6c"
 
 [[package]]
 name = "amaranth"
-version = "0.4.dev194+ga9d0380"
+version = "0.1.dev1324+g6dfed2e"
 requires_python = "~=3.8"
-git = "https://github.com/amaranth-lang/amaranth.git"
-revision = "a9d03805fff8c3d4f6769320323dbf44619fe422"
+git = "https://github.com/whitequark/amaranth.git"
+ref = "amaranth-cli"
+revision = "6dfed2ed70cf54d85c05c277090af5eef0ef6485"
 summary = "Amaranth hardware definition language"
 dependencies = [
     "Jinja2~=3.0",
     "pyvcd<0.5,>=0.2.2",
-]
-
-[[package]]
-name = "amaranth-stdio"
-version = "0.1.dev16+gbb39058"
-git = "https://github.com/amaranth-lang/amaranth-stdio"
-revision = "bb39058bd956cf89379c7cde9404998476470a07"
-summary = "Industry standard I/O for Amaranth HDL"
-dependencies = [
-    "amaranth<0.5,>=0.3",
 ]
 
 [[package]]
