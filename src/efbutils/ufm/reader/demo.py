@@ -17,11 +17,22 @@ def demo_signature(num_leds):
 
 
 class Demo(Component):
+    """Demo class that can be used with Amaranth's CLI to generate Verilog.
+
+    Create JSON dictionaries on the command-line for efb_config and
+    ufm_config "-p" parameters to "amaranth generate", e.g.::
+
+        amaranth generate efbutils.ufm.reader.demo:Demi \
+        -p num_leds 8 \
+        -p efb_config '{ "dev_density": "7000L", "wb_clk_freq": "12.08" }' \
+        -p ufm_config '{ "init_mem": null, "zero_mem": true, "start_page": 0, "num_pages": 2046}' \
+        verilog -v -
+    """  # noqa: E501
     @property
     def signature(self):
         return demo_signature(self.num_leds)
 
-    def __init__(self, *, num_leds,
+    def __init__(self, *, num_leds: int,
                  efb_config: EFBConfig,
                  ufm_config: UFMConfig):
         self.num_leds = num_leds
@@ -155,23 +166,3 @@ class POR(Elaboratable):
             m.d.por += cnt.eq(cnt + 1)
 
         return m
-
-
-class VerilogDemo(Demo):
-    """Demo class that can be used with Amaranth's CLI to generate Verilog.
-
-       Create JSON dictionaries on the command-line for efb_config and
-       ufm_config "-p" parameters to "amaranth generate", e.g.::
-
-            amaranth generate efbutils.ufm.reader.efb:VerilogEFB \
-            -p efb_config '{ "dev_density": "7000L", "wb_clk_freq": "12.08" }' \
-            -p ufm_config '{ "init_mem": null, "zero_mem": true, "start_page": 0, "num_pages": 2046}' \
-            verilog -v -
-    """  # noqa: E501
-    def __init__(self, *,
-                 num_leds: int,
-                 efb_config: str,
-                 ufm_config: str):
-        super().__init__(num_leds=num_leds,
-                         efb_config=EFBConfig.from_json_str(efb_config),
-                         ufm_config=UFMConfig.from_json_str(ufm_config))

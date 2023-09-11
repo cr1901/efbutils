@@ -9,33 +9,79 @@ from amaranth.lib.wiring import In, Component
 from .sequencer import EfbWishbone
 
 
-class BaseConfig():
-    """Mixin to allow converting to EFB Config dataclasses from various
-       types using classmethods."""
-
-    @classmethod
-    def from_dict(cls, dict):
-        return cls(**dict)
-
-    @classmethod
-    def from_json_str(cls, str):
-        return cls(**json.loads(str))
-
-
 @dataclass
+class BaseConfig:
+    """Base class to create EFB config classes.
+
+    The constructor can create configs from a JSON string, dict, or
+    kwargs, and verifies the arguments against subclass' annotations."""
+
+    def __init__(self, *args, **kwargs):
+        self.enabled = False
+
+        if args and isinstance(args[0], str):
+            argdict = json.loads(args[0])
+
+            # If "null", the component is disabled. Replace with empty
+            # dict for later.
+            if not argdict:
+                argdict = {}
+        elif args and isinstance(args[0], dict):
+            argdict = args[0]
+        else:
+            argdict = kwargs
+
+        # if "empty", the component is disabled.
+        if not argdict:
+            return
+
+        self.enabled = True
+        for k, v in self.__annotations__.items():
+            try:
+                self.__dict__[k] = argdict[k]
+            except KeyError as e:
+                raise ValueError("expected input argument {} of type {} not received"  # noqa: E501
+                                 .format(k, v)) from e
+
+    # Truth value indicates whether component is enabled or not.
+    def __bool__(self):
+        return self.enabled
+
+
+@dataclass(init=False)
 class UFMConfig(BaseConfig):
-    """Base UFM Config, used by the EFB class."""
+    """UFM Config, used by the EFB class."""
     init_mem: Path
     zero_mem: bool
     start_page: int
     num_pages: int
 
 
-@dataclass
+@dataclass(init=False)
 class EFBConfig(BaseConfig):
     """Base EFB Config, used by the EFB class."""
     dev_density: str
     wb_clk_freq: str
+
+
+@dataclass(init=False)
+class TCConfig(BaseConfig):
+    """Timer Config, used by the EFB class."""
+
+
+@dataclass(init=False)
+class SPIConfig(BaseConfig):
+    """SPI Config, used by the EFB class."""
+
+
+@dataclass(init=False)
+class I2C1Config(BaseConfig):
+    """I2C1 Config, used by the EFB class."""
+
+
+@dataclass(init=False)
+class I2C2Config(BaseConfig):
+    """I2C2 Config, used by the EFB class."""
 
 
 class SimpleUFMConfig(UFMConfig):
@@ -82,10 +128,31 @@ class SimpleUFMConfig(UFMConfig):
 
 
 class EFB(Component):
+    """EFB class that can be used with Amaranth's CLI to generate Verilog.
+
+    Create JSON dictionaries on the command-line for each "-p" parameter
+    to "amaranth generate", e.g.::
+
+        amaranth generate efbutils.ufm.reader.efb:EFB \
+        -p efb_config '{ "dev_density": "7000L", "wb_clk_freq": "12.08" }' \
+        -p ufm_config '{ "init_mem": null, "zero_mem": true, "start_page": 0, "num_pages": 2046}' \
+        -p tc_config null \
+        -p spi_config null \
+        -p i2c1_config null \
+        -p i2c2_config null \
+        verilog -v -
+
+    All parameters must be included. You can disable parts of the EFB by using
+    a JSON "null" for the relevant config.
+    """  # noqa: E501
     bus: In(EfbWishbone)
 
-    def __init__(self, *, efb_config, ufm_config, tc_config, spi_config,
-                 i2c1_config, i2c2_config):
+    def __init__(self, *, efb_config: EFBConfig,
+                 ufm_config: UFMConfig,
+                 tc_config: TCConfig,
+                 spi_config: SPIConfig,
+                 i2c1_config: I2C1Config,
+                 i2c2_config: I2C2Config):
         super().__init__()
         self.efb_config = efb_config
         self.ufm_config = ufm_config
@@ -99,10 +166,10 @@ class EFB(Component):
         self.map_default_params()
         self.map_efb_config()
         self.map_ufm_config()
-        # self.map_tc_config()
-        # self.map_spi_config()
-        # self.map_i2c1_config()
-        # self.map_i2c2_config()
+        self.map_tc_config()
+        self.map_spi_config()
+        self.map_i2c1_config()
+        self.map_i2c2_config()
 
     def elaborate(self, plat):
         m = Module()
@@ -114,7 +181,7 @@ class EFB(Component):
 
     def map_efb_config(self):
         if not self.efb_config:
-            return
+            raise ValueError("an EFB Config must be provided")
 
         self.params.update({
             "p_DEV_DENSITY": self.efb_config.dev_density,
@@ -134,15 +201,27 @@ class EFB(Component):
         })
 
     def map_tc_config(self):
+        if not self.tc_config:
+            return
+
         raise NotImplementedError("Timer config for EFB has not been implemented yet.")  # noqa: E501
 
     def map_spi_config(self):
+        if not self.spi_config:
+            return
+
         raise NotImplementedError("SPI config for EFB has not been implemented yet.")  # noqa: E501
 
     def map_i2c1_config(self):
+        if not self.i2c1_config:
+            return
+
         raise NotImplementedError("I2C1 config for EFB has not been implemented yet.")  # noqa: E501
 
     def map_i2c2_config(self):
+        if not self.i2c2_config:
+            return
+
         raise NotImplementedError("I2C2 config for EFB has not been implemented yet.")  # noqa: E501
 
     def map_default_params(self):
@@ -315,23 +394,3 @@ class EFB(Component):
             "o_CFGWAKE": Signal(),
             "o_CFGSTDBY": Signal()
         })
-
-
-class VerilogEFB(EFB):
-    """EFB class that can be used with Amaranth's CLI to generate Verilog.
-
-       Create JSON dictionaries on the command-line for each "-p" parameter
-       to "amaranth generate", e.g.::
-
-            amaranth generate efbutils.ufm.reader.efb:VerilogEFB \
-            -p efb_config '{ "dev_density": "7000L", "wb_clk_freq": "12.08" }' \
-            -p ufm_config '{ "init_mem": null, "zero_mem": true, "start_page": 0, "num_pages": 2046}' \
-            verilog -v -
-    """  # noqa: E501
-    def __init__(self, *,
-                 efb_config: str,
-                 ufm_config: str):
-        super().__init__(efb_config=EFBConfig.from_json_str(efb_config),
-                         ufm_config=UFMConfig.from_json_str(ufm_config),
-                         tc_config=None, spi_config=None, i2c1_config=None,
-                         i2c2_config=None)

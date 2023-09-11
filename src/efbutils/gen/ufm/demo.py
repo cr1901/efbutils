@@ -18,8 +18,8 @@ class DemoGenerator(AmaranthGenerator):
     # Generate a core to be included in another project.
     def create_module(self):
         return Demo(num_leds=self.num_leds,
-                    efb_config=EFBConfig.from_dict(self.efb_config),
-                    ufm_config=UFMConfig.from_dict(self.ufm_config))
+                    efb_config=EFBConfig(self.efb_config),
+                    ufm_config=UFMConfig(self.ufm_config))
 
 
 def main(data=None):
