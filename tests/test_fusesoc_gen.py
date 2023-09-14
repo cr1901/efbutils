@@ -1,6 +1,7 @@
 import efbutils
 import pytest
 from pathlib import Path
+import shutil
 import subprocess
 import yaml
 
@@ -25,7 +26,11 @@ SUBSTS = {
             "ufm_config": {"init_mem": "init.mem",
                            "start_page": 2042,
                            "num_pages": 4,
-                           "zero_mem": False}
+                           "zero_mem": False},
+            "tc_config": None,
+            "spi_config": None,
+            "i2c1_config": None,
+            "i2c2_config": None
         }
     },
     "demo_lcmxo2_7000he_b_evn": {
@@ -47,11 +52,22 @@ SUBSTS = {
 
 
 @pytest.fixture
-def fusesoc_init(tmp_path):
+def fusesoc():
+    # Using bare "fusesoc" to subprocess will call the fusesoc I use for
+    # development from the system Python rather than the fusesoc in the virtual
+    # environment.
+    #
+    # I don't get it either, but see "Warning" in:
+    # https://docs.python.org/3/library/subprocess.html#popen-constructor
+    return shutil.which("fusesoc")
+
+
+@pytest.fixture
+def fusesoc_init(fusesoc, tmp_path):
     efb_path = Path(efbutils.__file__).resolve().parent.parent.parent / "cores"
-    subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
+    subprocess.check_call([fusesoc, "--config", tmp_path / "fusesoc.conf",
                            "library", "add", "efbutils", efb_path])
-    subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
+    subprocess.check_call([fusesoc, "--config", tmp_path / "fusesoc.conf",
                            "library", "add", "gentest", tmp_path])
 
 
@@ -67,7 +83,8 @@ def gentest_core(request):
                                   "ufm_reader",
                                   "efb",
                                   "demo_lcmxo2_7000he_b_evn"])
-def test_fusesoc_generator(gentest_core, fusesoc_init, tmp_path, core):
+def test_fusesoc_generator(gentest_core, fusesoc, fusesoc_init, tmp_path,
+                           core):
     gentest_core["name"] = f"cr1901:efbutils:gentest-{core}:0.0.1"
     gentest_core["filesets"]["generators"]["depend"] = SUBSTS[core]["depend"]
     gentest_core["generate"]["module"]["generator"] = SUBSTS[core]["generator"]
@@ -76,14 +93,14 @@ def test_fusesoc_generator(gentest_core, fusesoc_init, tmp_path, core):
     with open(tmp_path / "gentest.core", 'w') as f:
         yaml.dump(gentest_core, f)
 
-    subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
+    subprocess.check_call([fusesoc, "--config", tmp_path / "fusesoc.conf",
                            "run", "--setup", "--work-root", tmp_path / "build",
                            f"cr1901:efbutils:gentest-{core}"])
 
 
 # TODO: test_fusesoc_build for open toolchain as EFB support becomes ready.
 @pytest.mark.parametrize("core", ["lcmxo2_7000he_b_evn"])
-def test_fusesoc_setup(fusesoc_init, tmp_path, core):
-    subprocess.check_call(["fusesoc", "--config", tmp_path / "fusesoc.conf",
+def test_fusesoc_setup(fusesoc, fusesoc_init, tmp_path, core):
+    subprocess.check_call([fusesoc, "--config", tmp_path / "fusesoc.conf",
                            "run", "--setup", "--work-root", tmp_path / "build",
                            "--target", core, SUBSTS[core]["core_file"]])

@@ -4,7 +4,8 @@ description: Generic random-access byte interface to page-granularity storage.
 
 generators:
   page_buffer_gen:
-    interpreter: python3
+    interpreter: python.exe
+    shutil: true
     command: page_buffer_gen.py
     description: |
       Generate the page_buffer Amaranth module into Verilog.

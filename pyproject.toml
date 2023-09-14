@@ -7,9 +7,9 @@ authors = [
 ]
 dependencies = [
     "amaranth @ git+https://github.com/whitequark/amaranth.git@amaranth-cli",
-    "fusesoc>=2.2.1",
+    "fusesoc @ git+https://github.com/cr1901/fusesoc.git@shutil",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}
 
