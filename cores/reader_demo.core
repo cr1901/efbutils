@@ -119,7 +119,6 @@ scripts:
 generators:
   demo_gen:
     interpreter: python.exe
-    shutil: true
     command: demo_gen.py
     description: |
       Generate a demo for MachXO2 boards that programs the UFM via JTAG and

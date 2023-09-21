@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "amaranth @ git+https://github.com/whitequark/amaranth.git@amaranth-cli",
-    "fusesoc @ git+https://github.com/cr1901/fusesoc.git@shutil",
+    "fusesoc @ git+https://github.com/olofk/fusesoc",
 ]
 requires-python = ">=3.8"
 readme = "README.md"

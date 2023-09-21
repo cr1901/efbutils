@@ -5,7 +5,6 @@ description: MachXO2/3 Embedded Function Block (EFB) Wrapper.
 generators:
   efb_gen:
     interpreter: python.exe
-    shutil: true
     command: efb_gen.py
     description: |
       Generate an EFB module using an Amaranth `Instance`. YAML parameters

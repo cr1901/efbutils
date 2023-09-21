@@ -5,7 +5,6 @@ description: MachXO2/3 User Flash Memory reader.
 generators:
   ufm_reader_gen:
     interpreter: python.exe
-    shutil: true
     command: ufm_reader_gen.py
     description: |
       Generate the ufm_reader Amaranth module into Verilog.
